@@ -56,7 +56,7 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'Target Port',
 			width: 4,
-			default: 9090,
+			default: 8080,
 			regex: self.REGEX_PORT
 		}
 	]
