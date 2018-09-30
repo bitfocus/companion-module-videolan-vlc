@@ -1,7 +1,11 @@
 {
-  "name": "companion-module-vlc",
+  "name": "vlc",
   "version": "1.0.0",
-  "description": "",
+	"api_version": "1.0.0",
+	"keywords": [ "Video", "Software" ],
+	"manufacturer": "VideoLAN",
+	"product": "VLC",
+	"shortname": "vlc",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/bitfocus/companion-module-vlc.git"
   },
-  "author": "",
+  "author": "Håkon Nessjøen <haakon@bitfocus.io>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/bitfocus/companion-module-vlc/issues"
