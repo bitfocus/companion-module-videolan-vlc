@@ -1,23 +1,26 @@
 {
-  "name": "vlc",
-  "version": "1.0.0",
+	"name": "vlc",
+	"version": "1.0.1",
 	"api_version": "1.0.0",
-	"keywords": [ "Video", "Software" ],
+	"keywords": [
+		"Video",
+		"Software"
+	],
 	"manufacturer": "VideoLAN",
 	"product": "VLC",
 	"shortname": "vlc",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bitfocus/companion-module-vlc.git"
-  },
-  "author": "Håkon Nessjøen <haakon@bitfocus.io>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/bitfocus/companion-module-vlc/issues"
-  },
-  "homepage": "https://github.com/bitfocus/companion-module-vlc#readme"
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-vlc.git"
+	},
+	"author": "Håkon Nessjøen <haakon@bitfocus.io>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-vlc/issues"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-vlc#readme"
 }
