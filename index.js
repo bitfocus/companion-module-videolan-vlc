@@ -76,16 +76,16 @@ instance.prototype.actions = function(system) {
 
 		'play':   { label: 'Play'},
 		'playID': { label: 'Play ID',
-					options: [
-						{
-							type: 'textinput',
-							label: 'Clip Nr.',
-							id: 'clip',
-							default: 1,
-							regex: self.REGEX_NUMBER
-						}
-					]
-				},
+				options: [
+					{
+						type: 'textinput',
+						label: 'Clip Nr.',
+						id: 'clip',
+						default: 1,
+						regex: self.REGEX_NUMBER
+					}
+				]
+			},
 		'stop':   { label: 'Stop'},
 		'pause':  { label: 'Pause / Resume'},
 		'next':   { label: 'Next'},
