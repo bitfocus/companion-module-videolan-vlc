@@ -93,7 +93,7 @@ instance.prototype.actions = function(system) {
 		'full':   { label: 'Full Screen'},
 		'loop':   { label: 'Loop'},
 		'repeat': { label: 'Repeat'}
-		
+
 
 	});
 }
@@ -109,7 +109,7 @@ instance.prototype.action = function(action) {
 		case 'play':
 			cmd = '?command=pl_play';
 			break;
-		
+
 		case 'playID':
 			cmd = '?command=pl_play&id=' + opt.clip;
 			break;
@@ -152,7 +152,7 @@ instance.prototype.action = function(action) {
 				self.log('Error from  vlc: ' + result);
 				return;
 				}
-			console.log("Result from REST: ", result);
+			//console.log("Result from REST: ", result);
 			});
 	}
 
