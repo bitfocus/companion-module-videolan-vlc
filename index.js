@@ -1,6 +1,7 @@
 var instance_skel = require('../../instance_skel');
 var debug;
 var log;
+var clip;
 
 function instance(system, id, config) {
 	var self = this;
@@ -74,6 +75,17 @@ instance.prototype.actions = function(system) {
 
 
 		'play':   { label: 'Play'},
+		'playID': { label: 'Play ID',
+					options: [
+						{
+							type: 'textinput',
+							label: 'Clip Nr.',
+							id: 'clip',
+							default: 1,
+							regex: self.REGEX_NUMBER
+						}
+					]
+				},
 		'stop':   { label: 'Stop'},
 		'pause':  { label: 'Pause / Resume'},
 		'next':   { label: 'Next'},
@@ -81,6 +93,7 @@ instance.prototype.actions = function(system) {
 		'full':   { label: 'Full Screen'},
 		'loop':   { label: 'Loop'},
 		'repeat': { label: 'Repeat'}
+		
 
 	});
 }
@@ -88,12 +101,17 @@ instance.prototype.actions = function(system) {
 instance.prototype.action = function(action) {
 	var self = this;
 	var cmd
+	var opt = action.options;
 	debug('action: ', action);
 
 	switch (action.action) {
 
 		case 'play':
 			cmd = '?command=pl_play';
+			break;
+		
+		case 'playID':
+			cmd = '?command=pl_play&id=' + opt.clip;
 			break;
 
 		case 'stop':

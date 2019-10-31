@@ -3,6 +3,7 @@
 **Available commands for VLC**
 
 * Play
+* Play ID
 * Stop
 * Pause / Resume
 * Next
