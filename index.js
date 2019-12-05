@@ -59,6 +59,12 @@ instance.prototype.config_fields = function () {
 			width: 4,
 			default: 8080,
 			regex: self.REGEX_PORT
+		},
+		{
+			type: 'textinput',
+			id: 'password',
+			label: 'HTTP Password',
+			width: 8
 		}
 	]
 };
@@ -147,13 +153,23 @@ instance.prototype.action = function(action) {
 	}
 
 	if (cmd !== undefined) {
-		self.system.emit('rest', 'http://' + self.config.host +':'+ self.config.port +'/requests/status.xml'+ cmd, {},function (err, result) {
-			if (err) {
-				self.log('Error from  vlc: ' + result);
-				return;
+
+		let headers = {};
+		if (self.config.password) {
+			headers['Authorization'] = "Basic " + new Buffer(['',self.config.password].join(":")).toString("base64");
+		}
+
+		self.system.emit('rest',
+			'http://' + self.config.host +':'+ self.config.port +'/requests/status.xml'+ cmd,
+			{},
+			(err, result) => {
+				if (err) {
+					self.log('Error from  vlc: ' + result);
 				}
-			//console.log("Result from REST: ", result);
-			});
+				//self.debug("Result from REST: ", result);
+			},
+			headers
+		);
 	}
 
 };
