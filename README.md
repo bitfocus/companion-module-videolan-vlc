@@ -1,4 +1,5 @@
 # companion-module-vlc
+See HELP.md and LICENSE
 
 **V1.0.1**
 * Initial Module
