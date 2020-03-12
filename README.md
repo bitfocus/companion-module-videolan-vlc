@@ -1,4 +1,4 @@
-# companion-module-vlc
+# companion-module-videolan-vlc
 See HELP.md and LICENSE
 
 **V1.0.1**
