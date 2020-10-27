@@ -8,3 +8,6 @@ See HELP.md and LICENSE
 
 **V1.0.2**
 * Added "Play ID"
+
+**V1.0.3**
+* Added Shuffle

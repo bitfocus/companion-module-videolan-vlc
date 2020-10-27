@@ -10,4 +10,5 @@
 * Previous
 * Full Screen
 * Loop
+* Shuffle
 * Repeat

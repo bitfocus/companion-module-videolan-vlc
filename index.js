@@ -98,6 +98,7 @@ instance.prototype.actions = function(system) {
 		'prev':   { label: 'Previous'},
 		'full':   { label: 'Full Screen'},
 		'loop':   { label: 'Loop'},
+		'shuffle':{ label: 'Shuffle'},
 		'repeat': { label: 'Repeat'}
 
 
@@ -142,6 +143,10 @@ instance.prototype.action = function(action) {
 
 		case 'loop':
 			cmd = '?command=pl_loop';
+			break;
+
+		case 'shuffle':
+			cmd = '?command=pl_random';
 			break;
 
 		case 'repeat':
