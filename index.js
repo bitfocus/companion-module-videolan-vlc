@@ -1,7 +1,6 @@
 var instance_skel = require('../../instance_skel');
 var debug;
 var log;
-var clip;
 
 function instance(system, id, config) {
 	var self = this;
@@ -32,6 +31,7 @@ instance.prototype.updateConfig = function(config) {
 
 	self.config = config;
 };
+
 instance.prototype.init = function() {
 	var self = this;
 
@@ -66,7 +66,7 @@ instance.prototype.config_fields = function () {
 			label: 'HTTP Password',
 			width: 8
 		}
-	]
+	];
 };
 
 // When module gets deleted
@@ -103,11 +103,11 @@ instance.prototype.actions = function(system) {
 
 
 	});
-}
+};
 
 instance.prototype.action = function(action) {
 	var self = this;
-	var cmd
+	var cmd;
 	var opt = action.options;
 	debug('action: ', action);
 
@@ -152,16 +152,13 @@ instance.prototype.action = function(action) {
 		case 'repeat':
 			cmd = '?command=pl_repeat';
 			break;
-
-
-
 	}
 
 	if (cmd !== undefined) {
 
 		let headers = {};
 		if (self.config.password) {
-			headers['Authorization'] = "Basic " + new Buffer(['',self.config.password].join(":")).toString("base64");
+			headers.Authorization = "Basic " + Buffer.from(['',self.config.password].join(":")).toString("base64");
 		}
 
 		self.system.emit('rest',
