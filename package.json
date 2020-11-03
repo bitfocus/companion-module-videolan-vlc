@@ -3,7 +3,7 @@
 	"legacy": [
 		"vlc"
 	],
-	"version": "1.0.3",
+	"version": "1.1.0.",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Video",
@@ -21,9 +21,15 @@
 		"url": "git+https://github.com/bitfocus/companion-module-vlc.git"
 	},
 	"author": "Håkon Nessjøen <haakon@bitfocus.io>",
+	"contributors": [
+		"John A Knight Jr <istnv@ayesti.com>"
+	],
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/bitfocus/companion-module-vlc/issues"
 	},
-	"homepage": "https://github.com/bitfocus/companion-module-vlc#readme"
+	"homepage": "https://github.com/bitfocus/companion-module-vlc#readme",
+	"jshintConfig": {
+		"esversion": "6"
+	  }
 }
