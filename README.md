@@ -11,3 +11,8 @@ See HELP.md and LICENSE
 
 **V1.0.3**
 * Added Shuffle
+
+**V1.1.0**
+* Added dynamic variables and feedback
+* (which was required to)
+* Corrected Play by ID
