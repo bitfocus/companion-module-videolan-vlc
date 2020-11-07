@@ -113,6 +113,7 @@ instance.prototype.clear = function () {
 		position: 0,
 		time: 0
 	};
+	self.hires = (self.config.hires ? true : false);
 	self.PlayLoop = false;
 	self.PlayRepeat = false;
 	self.PlayRandom = false;
@@ -475,15 +476,8 @@ instance.prototype.updatePlayback = function(data) {
 instance.prototype.pollPlayback = function() {
 	var self = this;
 
-	// // no playlist
-	// if (self.PlayIDs.length == 0) {
-	// 	if (!self.PollCount) {
-	// 		self.updateStatus();
-	// 	}
-	// 	return;
-	// }
-	// poll @ 100ms if not playing
-	if (self.PlayState != self.VLC_IS_STOPPED  || (self.PollCount % 5) == 0) {
+	// poll @ 500ms if not playing
+	if (!((self.PlayState == self.VLC_IS_STOPPED) || (self.hires))  || (self.PollCount % 5) == 0) {
 		self.client.get(self.baseURL + '/requests/status.json', self.auth, function(data, response) {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
@@ -536,6 +530,13 @@ instance.prototype.config_fields = function () {
 			id: 'password',
 			label: 'HTTP Password',
 			width: 8
+		},
+		{
+			type: 'checkbox',
+			id: 'hires',
+			label: 'Increase timer resolution?',
+			tooltip: 'Poll playback counter more frequently\nfor better response and resolution',
+			default: false,
 		}
 	];
 };
