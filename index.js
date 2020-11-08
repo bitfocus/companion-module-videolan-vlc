@@ -1,6 +1,5 @@
 // 'use strict';
 var rest_client 	= require('node-rest-client').Client;
-const { Client } = require('node-rest-client');
 var instance_skel = require('../../instance_skel');
 var debug;
 var log;
@@ -70,15 +69,6 @@ function vlc_MediaInfo (info) {
 	}
 }
 
-instance.prototype.vlc_renumber = function(m) {
-	var ids = [];
-
-	Object.keys(m).forEach(pi => {
-		ids.push(pi);
-	});
-	return ids;
-};
-
 instance.prototype.titleMunge = function(t) {
 	var self = this;
 
@@ -99,7 +89,7 @@ instance.prototype.clear = function () {
 		delete self.pbPoll;
 	}
 	if (self.client) {
-		self.client.destroy();
+		delete self.client;
 	}
 	self.PlayIDs = [];
 	self.PlayList = {};
@@ -340,18 +330,22 @@ instance.prototype.updatePlaylist = function(data) {
 
 	for (var i in newList) {
 		if (newList[i].name == 'Playlist') {
-			if (newList[i].children.length != Object.keys(self.PlayList).length) {
+			var nl = newList[i].children;
+			var pl = self.PlayIDs;
+			if (nl.length != pl.length || pl.length == 0 || nl[0].id != pl[0]) {
 				self.PlayList = {};
 				var m, p;
+				for (p in pl) {
+					self.setVariable('pname_' + (parseInt(p) + 1));
+				}
+				pl = [];
 				for (p in newList[i].children) {
 					m = new vlc_MediaInfo(newList[i].children[p]);
 					self.PlayList[m.id] = m;
-					self.PlayIDs.push(m.id);
+					pl.push(m.id);
 				}
-				for (p in self.PlayIDs) {
-					self.setVariable('pname_' + (parseInt(p) + 1));
-				}
-				self.PlayIDs = self.vlc_renumber(self.PlayList);
+				
+				self.PlayIDs = pl; 
 				for (p in self.PlayIDs) {
 					self.setVariable('pname_' + (parseInt(p) + 1), self.PlayList[self.PlayIDs[p]].name);
 				}
@@ -477,7 +471,7 @@ instance.prototype.pollPlayback = function() {
 	var self = this;
 
 	// poll @ 500ms if not playing
-	if (!((self.PlayState == self.VLC_IS_STOPPED) || (self.hires))  || (self.PollCount % 5) == 0) {
+	if (((self.PlayState != self.VLC_IS_STOPPED) && (self.hires))  || (self.PollCount % 5) == 0) {
 		self.client.get(self.baseURL + '/requests/status.json', self.auth, function(data, response) {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
@@ -871,7 +865,6 @@ instance.prototype.action = function(action) {
 		});
 		// force an update if stopped
 		self.PollCount = self.PollCount + (3 - (self.PollCount % 5));
-		self.debug(`PollCount = ${self.PollCount}`);
 	}
 
 };
