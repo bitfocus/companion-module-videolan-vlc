@@ -80,7 +80,7 @@ instance.prototype.clear = function () {
 
 	self.status(self.STATUS_WARNING,"Initializing");
 	
-	if (self.plScan) {
+	if (self.plPoll) {
 		clearInterval(self.plPoll);
 		delete self.plPoll;
 	}
