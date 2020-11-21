@@ -354,24 +354,6 @@ instance.prototype.updatePlaylist = function(data) {
 	}
 };
 
-instance.prototype.pollPlaylist = function() {
-	var self = this;
-	
-	self.client.get(self.baseURL + '/requests/playlist.json', self.auth, function(data, response) {
-		if (self.lastStatus != self.STATUS_OK) {
-			self.status(self.STATUS_OK);
-			self.lastStatus = self.STATUS_OK;
-		}
-		self.updatePlaylist(data);
-	}).on('error', function (err) {
-		if (self.lastStatus != self.STATUS_ERROR) {
-			self.log('error', err.message);
-			self.status(self.STATUS_ERROR, err.message);
-			self.lastStatus = self.STATUS_ERROR;
-		}
-	});	
-};
-
 instance.prototype.updateStatus = function() {
 	var self = this;
 
@@ -467,24 +449,52 @@ instance.prototype.updatePlayback = function(data) {
 };
 
 
-instance.prototype.pollPlayback = function() {
-	var self = this;
+instance.prototype.getRequest = function(url, cb) {
+	self = this;
+	emsg = '';
 
-	// poll @ 500ms if not playing
-	if (((self.PlayState != self.VLC_IS_STOPPED) && (self.hires))  || (self.PollCount % 5) == 0) {
-		self.client.get(self.baseURL + '/requests/status.json', self.auth, function(data, response) {
+	self.client.get(self.baseURL + url, self.auth, function(data, response) {
+		if (response.statusCode == 401) {
+			// error/not found
+			if (self.lastStatus != self.STATUS_ERROR) {
+				emsg = response.statusMessage + '.\nBad Password?';
+				self.status(self.STATUS_ERROR, emsg);
+				self.log('error', emsg);
+				self.lastStatus = self.STATUS_ERROR;
+			}
+		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
 				self.lastStatus = self.STATUS_OK;
 			}
-			self.updatePlayback(data);
-		}).on('error', function (err) {
-			if (self.lastStatus != self.STATUS_ERROR) {
-				self.log('error', err.message);
-				self.status(self.STATUS_ERROR, err.message);
-				self.lastStatus = self.STATUS_ERROR;
-			}
-		});
+			cb.call(self,data);
+		}
+	}).on('error', function (err) {
+		if (self.lastStatus != self.STATUS_ERROR) {
+			emsg = err.message;
+			self.log('error', emsg);
+			self.status(self.STATUS_ERROR, emsg);
+			self.lastStatus = self.STATUS_ERROR;
+		}
+	});	
+};
+
+instance.prototype.pollPlaylist = function() {
+	var self = this;
+	var data;
+		
+	self.getRequest('/requests/playlist.json', self.updatePlaylist);
+
+};
+
+
+instance.prototype.pollPlayback = function() {
+	var self = this;
+	var data;
+
+	// poll @ 500ms if not playing
+	if (((self.PlayState != self.VLC_IS_STOPPED) && (self.hires))  || (self.PollCount % 5) == 0) {
+		self.getRequest('/requests/status.json', self.updatePlayback);
 	}
 	
 	self.PollCount += 1;
