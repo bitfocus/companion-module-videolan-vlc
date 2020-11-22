@@ -859,8 +859,6 @@ instance.prototype.action = function(action) {
 	}
 
 	if (cmd !== undefined) {
-
-		
 		self.client.get(self.baseURL + '/requests/status.json'+ cmd, self.auth, function(data, response) {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
