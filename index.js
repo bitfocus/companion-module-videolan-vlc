@@ -96,6 +96,7 @@ instance.prototype.clear = function () {
 	self.PlayState = self.VLC_IS_STOPPED;
 	self.NowPlaying = 0;
 	self.PollCount = 0;
+	self.vlcVersion = '';
 	self.PlayStatus = {
 		title: '',
 		num: 0,
@@ -279,6 +280,10 @@ instance.prototype.init_variables = function() {
 
 	var variables = [
 		{
+			label: 'VLC Version',
+			name:  'v_ver'
+		},
+		{
 			label: 'Playing Status',
 			name:  'r_stat'
 		},
@@ -389,6 +394,7 @@ instance.prototype.updateStatus = function() {
 		}
 	}
 
+	self.setVariable('v_ver', self.vlcVersion);
 	self.setVariable('r_id', self.NowPlaying);
 	self.setVariable('r_name', ps.title);
 	self.setVariable('r_num', ps.num);
@@ -410,6 +416,7 @@ instance.prototype.updatePlayback = function(data) {
 
 	var pbInfo = JSON.parse(data.toString());
 	var wasPlaying = pbStat({ currentplid: self.NowPlaying, position: self.PlayStatus.position });
+	self.vlcVersion = pbInfo.version;
 
 	function pbStat(info) {
 		return info.currentplid + ':' + info.position + ':' + self.PlayState;
@@ -430,7 +437,7 @@ instance.prototype.updatePlayback = function(data) {
 		self.PlayStatus.time = 0;
 		self.PlayStatus.num = 0;
 		self.NowPlaying = pbInfo.currentplid;
-	} else if (self.PlayIDs.length > 2) {
+	} else if (self.PlayIDs.length > 0) {
 		self.NowPlaying = pbInfo.currentplid;
 		self.PlayStatus.title = self.titleMunge(self.PlayList[self.NowPlaying].name);
 		self.PlayStatus.length = pbInfo.length;
