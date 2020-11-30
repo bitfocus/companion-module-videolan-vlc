@@ -23,7 +23,7 @@ function instance(system, id, config) {
 
 	// Example: When this script was committed, a fix needed to be made
 	// this will only be run if you had an instance of an older "version" before.
-	// "version" is calculated out from how many upgradescripts your intance config has run.
+	// "version" is calculated out from how many upgradescripts your instance config has run.
 	// So just add a addUpgradeScript when you commit a breaking change to the config, that fixes
 	// the config.
 
