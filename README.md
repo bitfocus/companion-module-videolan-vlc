@@ -25,3 +25,7 @@ See HELP.md and LICENSE
 
 **V1.1.3**
 * Playlist length check
+
+**V1.1.4**
+* Added default host '127.0.0.1'
+* Fixed error typos
