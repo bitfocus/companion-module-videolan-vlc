@@ -3,6 +3,16 @@ VLC is a free and open source cross-platform multimedia player and framework tha
 
 You can find it here: <a href="https://www.videolan.org/vlc/index.html" title="VLC">videolan.org</a>
 
+
+# *IMPORTANT UPDATE!* 
+**If you used this module prior to the feedback and variables version, the Play ID has changed!**
+The prior versions *sometimes* worked by starting the playlist at number 3. This version retrieves the 
+current playlist from VLC and numbers from 1 at the top.The first item in the list is *always* number 1 which means if you click the heading and sort the list, number 1 is *still* the first one on the list.
+
+VLC does not generate an error if you enter a Play ID that is not in the playlist. It will play the active item as if the Play ID was not there.
+
+Due to the nature of the feedback and play list syncronization, the module status shows ERROR if VLC is not running yet. This is normal. It is to let you know that buttons may not work as expected. The status will automatically change to OK when you start VLC.
+
 ## Configuration
 If you can successfully connect to VLC with a browser, this module will work. Enter the same information from the URL.
 
