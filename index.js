@@ -485,6 +485,12 @@ instance.prototype.getRequest = function(url, cb) {
 				self.log('error', emsg);
 				self.lastStatus = self.STATUS_WARNING;
 			}
+		} else if (response.statusCode != 200) {
+			if (self.lastStatus != self.STATUS_ERROR) {
+				self.status(self.STATUS_ERROR, response.statusMessage);
+				self.log('error', response.statusMessage);
+				self.lastStatus = self.STATUS_ERROR;
+			}
 		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
