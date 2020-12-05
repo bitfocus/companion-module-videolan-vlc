@@ -21,16 +21,9 @@ function instance(system, id, config) {
 		self.config._configIdx = -1;
 	}
 
-	// Example: When this script was committed, a fix needed to be made
-	// this will only be run if you had an instance of an older "version" before.
-	// "version" is calculated out from how many upgradescripts your instance config has run.
-	// So just add a addUpgradeScript when you commit a breaking change to the config, that fixes
-	// the config.
-
 	self.addUpgradeScript(function () {
 		var changed = false;
 
-		// just an example
 		if (self.config.host == undefined || self.config.host == '') {
 			self.config.host = '127.0.0.1';
 			changed = true;
