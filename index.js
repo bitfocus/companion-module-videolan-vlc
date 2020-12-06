@@ -17,17 +17,18 @@ function instance(system, id, config) {
 
 	self.actions(); // export actions
 
-	// Example: When this script was committed, a fix needed to be made
-	// this will only be run if you had an instance of an older "version" before.
-	// "version" is calculated out from how many upgradescripts your intance config has run.
-	// So just add a addUpgradeScript when you commit a breaking change to the config, that fixes
-	// the config.
+	if (process.env.DEVELOPER) {
+		self.config._configIdx = -1;
+	}
 
 	self.addUpgradeScript(function () {
-		// just an example
-		if (self.config.host !== undefined) {
-			self.config.old_host = self.config.host;
+		var changed = false;
+
+		if (self.config.host == undefined || self.config.host == '') {
+			self.config.host = '127.0.0.1';
+			changed = true;
 		}
+		return changed;
 	});
 
 	return self;
@@ -39,7 +40,7 @@ instance.prototype.MSTATUS_CHAR = {
 	stopped: "\u23F9"
 };
 
-instance.prototype.updateConfig = function(config) {
+instance.prototype.updateConfig = function (config) {
 	var self = this;
 
 	self.config = config;
@@ -91,6 +92,7 @@ instance.prototype.clear = function () {
 	if (self.client) {
 		delete self.client;
 	}
+	self.baseURL = '';
 	self.PlayIDs = [];
 	self.PlayList = {};
 	self.PlayState = self.VLC_IS_STOPPED;
@@ -116,16 +118,21 @@ instance.prototype.startup = function() {
 	var self = this;
 
 	self.clear();
-	self.init_client();
-	self.init_variables();
-	self.init_feedbacks();
-	self.init_presets();
-	self.plPoll = setInterval(function() { self.pollPlaylist(); }, 500);
-	self.pbPoll = setInterval(function() { self.pollPlayback(); }, 100);
+	if (self.config.host && self.config.port) {
+		self.init_client();
+		self.init_variables();
+		self.init_feedbacks();
+		self.init_presets();
+		self.plPoll = setInterval(function() { self.pollPlaylist(); }, 500);
+		self.pbPoll = setInterval(function() { self.pollPlayback(); }, 100);
+	} else {
+		self.status(self.STATUS_WARNING,"No host configured");
+	}
 };
 
 instance.prototype.init_client = function() {
 	var self = this;
+
 
 	self.baseURL = 'http://' + self.config.host +':'+ self.config.port;
 	self.auth = {};
@@ -139,8 +146,10 @@ instance.prototype.init_client = function() {
 	self.status(self.STATUS_WARNING, 'Connecting');
 
 	self.client.on('error', function(err) {
-		self.status(self.STATUS_ERROR, err);
-		self.lastStatus = self.STATUS_ERR;
+		if (self.lastStatus != self.STATUS_ERR) {
+			self.status(self.STATUS_ERROR, err);
+			self.lastStatus = self.STATUS_ERR;
+		}
 	});
 };
 
@@ -457,21 +466,28 @@ instance.prototype.updatePlayback = function(data) {
 
 
 instance.prototype.getRequest = function(url, cb) {
-	self = this;
-	emsg = '';
-
+	var self = this;
+	var emsg = '';
+	
 	self.client.get(self.baseURL + url, self.auth, function(data, response) {
 		if (response.statusCode == 401) {
 			// error/not found
-			if (self.lastStatus != self.STATUS_ERROR) {
+			if (self.lastStatus != self.STATUS_WARNING) {
 				emsg = response.statusMessage + '.\nBad Password?';
-				self.status(self.STATUS_ERROR, emsg);
+				self.status(self.STATUS_WARNING, emsg);
 				self.log('error', emsg);
+				self.lastStatus = self.STATUS_WARNING;
+			}
+		} else if (response.statusCode != 200) {
+			if (self.lastStatus != self.STATUS_ERROR) {
+				self.status(self.STATUS_ERROR, response.statusMessage);
+				self.log('error', response.statusMessage);
 				self.lastStatus = self.STATUS_ERROR;
 			}
 		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
+				self.log('info','Connected to ' + self.config.host + ':' + self.config.port);
 				self.lastStatus = self.STATUS_OK;
 			}
 			cb.call(self,data);
@@ -483,7 +499,7 @@ instance.prototype.getRequest = function(url, cb) {
 			self.status(self.STATUS_ERROR, emsg);
 			self.lastStatus = self.STATUS_ERROR;
 		}
-	});	
+	});
 };
 
 instance.prototype.pollPlaylist = function() {
@@ -526,6 +542,7 @@ instance.prototype.config_fields = function () {
 			id: 'host',
 			label: 'Target IP',
 			width: 8,
+			default: '127.0.0.1',
 			regex: self.REGEX_IP
 		},
 		{
@@ -539,7 +556,7 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'password',
-			label: 'HTTP Password',
+			label: 'HTTP Password (required)',
 			width: 8
 		},
 		{
