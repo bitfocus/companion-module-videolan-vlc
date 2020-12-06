@@ -22,6 +22,13 @@ function instance(system, id, config) {
 	}
 
 	self.addUpgradeScript(function () {
+		// just an example - has to live on though
+		if (self.config.host !== undefined) {
+			//self.config.old_host = self.config.host;
+		}
+	});
+
+	self.addUpgradeScript(function () {
 		var changed = false;
 
 		if (self.config.host == undefined || self.config.host == '') {
