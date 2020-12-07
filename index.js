@@ -86,8 +86,6 @@ instance.prototype.titleMunge = function(t) {
 instance.prototype.clear = function () {
 	var self = this;
 
-	self.status(self.STATUS_WARNING,"Initializing");
-	
 	if (self.plPoll) {
 		clearInterval(self.plPoll);
 		delete self.plPoll;
@@ -118,13 +116,17 @@ instance.prototype.clear = function () {
 	self.PlayRepeat = false;
 	self.PlayRandom = false;
 	self.PlayFull = false;
+	self.PollWaiting = 0;
 	self.lastStatus = -1;
+	self.disabled = false;
 };
 
 instance.prototype.startup = function() {
 	var self = this;
 
 	self.clear();
+	self.status(self.STATUS_WARNING,"Initializing");
+
 	if (self.config.host && self.config.port) {
 		self.init_client();
 		self.init_variables();
@@ -153,9 +155,9 @@ instance.prototype.init_client = function() {
 	self.status(self.STATUS_WARNING, 'Connecting');
 
 	self.client.on('error', function(err) {
-		if (self.lastStatus != self.STATUS_ERR) {
+		if (self.lastStatus != self.STATUS_ERROR) {
 			self.status(self.STATUS_ERROR, err);
-			self.lastStatus = self.STATUS_ERR;
+			self.lastStatus = self.STATUS_ERROR;
 		}
 	});
 };
@@ -196,10 +198,6 @@ instance.prototype.init_feedbacks = function() {
 				var options = feedback.options;
 
 				if (self.PlayState == parseInt(options.playStat)) {
-					ret = { color: options.fg, bgcolor: options.bg };
-				} else if (self.PlayState == parseInt(options.playStat)) {
-					ret = { color: options.fg, bgcolor: options.bg };
-				} else if (self.PlayState == parseInt(options.playStat)) {
 					ret = { color: options.fg, bgcolor: options.bg };
 				}
 				return ret;
@@ -365,8 +363,8 @@ instance.prototype.updatePlaylist = function(data) {
 					self.PlayList[m.id] = m;
 					pl.push(m.id);
 				}
-				
-				self.PlayIDs = pl; 
+
+				self.PlayIDs = pl;
 				for (p in self.PlayIDs) {
 					self.setVariable('pname_' + (parseInt(p) + 1), self.PlayList[self.PlayIDs[p]].name);
 				}
@@ -465,7 +463,7 @@ instance.prototype.updatePlayback = function(data) {
 	if (stateChanged) {
 		self.checkFeedbacks();
 	}
-	
+
 	if (pbStat(pbInfo) != wasPlaying) {
 		self.updateStatus();
 	}
@@ -475,7 +473,15 @@ instance.prototype.updatePlayback = function(data) {
 instance.prototype.getRequest = function(url, cb) {
 	var self = this;
 	var emsg = '';
-	
+
+	// wait until prior request is finished or timed-out
+	// to reduce stacking of unanswered requests
+	if (self.PollWaiting > 0) {
+		return;
+	}
+
+	self.PollWaiting++;
+
 	self.client.get(self.baseURL + url, self.auth, function(data, response) {
 		if (response.statusCode == 401) {
 			// error/not found
@@ -499,34 +505,45 @@ instance.prototype.getRequest = function(url, cb) {
 			}
 			cb.call(self,data);
 		}
+		self.PollWaiting--;
 	}).on('error', function (err) {
-		if (self.lastStatus != self.STATUS_ERROR) {
+		// check module status because a timeout error may
+		// still 'arrive' after module is disabled
+		if (!self.disabled && self.lastStatus != self.STATUS_ERROR) {
 			emsg = err.message;
 			self.log('error', emsg);
 			self.status(self.STATUS_ERROR, emsg);
 			self.lastStatus = self.STATUS_ERROR;
 		}
+		self.PollWaiting--;
 	});
 };
 
 instance.prototype.pollPlaylist = function() {
 	var self = this;
-	var data;
-		
-	self.getRequest('/requests/playlist.json', self.updatePlaylist);
 
+	// don't ask until connected (we have a valid status response)
+	if (self.lastStatus == self.STATUS_OK) {
+		self.getRequest('/requests/playlist.json', self.updatePlaylist);
+	}
 };
 
 
 instance.prototype.pollPlayback = function() {
 	var self = this;
 	var data;
+	var pollNow = false;
+	var pollTicks = ((self.lastStatus == self.STATUS_OK) ? 5 : 50);
 
-	// poll @ 500ms if not playing
-	if (((self.PlayState != self.VLC_IS_STOPPED) && (self.hires))  || (self.PollCount % 5) == 0) {
+	// poll every tick if not stopped and hires
+	pollNow = ((self.PlayState != self.VLC_IS_STOPPED) && self.hires);
+	// or poll every 500ms if connected and not playing
+	// every 5 seconds if not connected to allow for timeouts
+	pollNow = pollNow || 0 == (self.PollCount % pollTicks);
+	if (pollNow) {
 		self.getRequest('/requests/status.json', self.updatePlayback);
 	}
-	
+
 	self.PollCount += 1;
 };
 
@@ -534,7 +551,9 @@ instance.prototype.pollPlayback = function() {
 // When module gets deleted
 instance.prototype.destroy = function() {
 	var self = this;
+
 	self.clear();
+	self.disabled = true;
 	self.status(self.STATUS_UNKNOWN,'Disabled');
 
 	debug("destroy");
