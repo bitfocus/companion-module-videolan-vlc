@@ -452,12 +452,25 @@ instance.prototype.updatePlayback = function(data) {
 		self.PlayStatus.num = 0;
 		self.NowPlaying = pbInfo.currentplid;
 	} else if (self.PlayIDs.length > 0) {
-		self.NowPlaying = pbInfo.currentplid;
-		self.PlayStatus.title = self.titleMunge(self.PlayList[self.NowPlaying].name);
-		self.PlayStatus.length = pbInfo.length;
-		self.PlayStatus.position = pbInfo.position;
-		self.PlayStatus.time = pbInfo.time;
-		self.PlayStatus.num = 1 + self.PlayIDs.indexOf(pbInfo.currentplid.toString());
+		if (pbInfo.currentplid) {
+			self.NowPlaying = pbInfo.currentplid;
+			self.PlayStatus = {
+				title: self.titleMunge(self.PlayList[self.NowPlaying].name),
+				num: 1 + self.PlayIDs.indexOf(pbInfo.currentplid.toString()),
+				length: pbInfo.length,
+				position: pbInfo.position,
+				time: pbInfo.time
+			};
+		} else {
+			self.NowPlaying = -1;
+			self.PlayStatus = {
+				title: '',
+				num: 0,
+				length: 0,
+				position: 0,
+				time: 0
+			};
+		}
 	}
 
 	if (stateChanged) {
