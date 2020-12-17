@@ -32,5 +32,6 @@ See HELP.md and LICENSE
 
 **V1.1.5**
 * Reduce network polling in certain cases
-* Wait for response or timeout before sending next poll 
+* Wait for response or timeout before sending next poll
 * Catch stray error when module is disabled
+* Catch empty playback response
