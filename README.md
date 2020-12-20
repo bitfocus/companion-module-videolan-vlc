@@ -34,4 +34,8 @@ See HELP.md and LICENSE
 * Reduce network polling in certain cases
 * Wait for response or timeout before sending next poll
 * Catch stray error when module is disabled
-* Catch empty playback response
+* Catch empty playback response (issue #21)
+* Assume "Playlist" is the 1st list instead of checking the label.
+  * API labels change with locale/language, so it may not be labeled "Playlist" (issue #20)
+* Add option to override $NA for a defined number of playlist items.
+* Add ID option for feedback colors
