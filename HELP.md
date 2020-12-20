@@ -1,12 +1,12 @@
-# VLC Media Player  ![vlc](images/vlc_vlc.png "VLC") 
+# VLC Media Player  ![vlc](images/vlc_vlc.png "VLC")
 VLC is a free and open source cross-platform multimedia player and framework that plays most multimedia files as well as DVDs, Audio CDs, VCDs, and various streaming protocols.
 
 You can find it here: <a href="https://www.videolan.org/vlc/index.html" title="VLC">videolan.org</a>
 
 
-# *IMPORTANT UPDATE!* 
+# *IMPORTANT UPDATE!*
 **If you used this module prior to the feedback and variables version, the Play ID has changed!**
-The prior versions *sometimes* worked by starting the playlist at number 3. This version retrieves the 
+The prior versions *sometimes* worked by starting the playlist at number 3. This version retrieves the
 current playlist from VLC and numbers from 1 at the top.The first item in the list is *always* number 1 which means if you click the heading and sort the list, number 1 is *still* the first one on the list.
 
 VLC does not generate an error if you enter a Play ID that is not in the playlist. It will play the active item as if the Play ID was not there.
@@ -22,12 +22,16 @@ Setting | Description
 **Target Port** | Enter the port VLC is listening for HTTP/REST commands. Default port for VLC is 8080.
 **Password** | Enter the password if required to interact with VLC
 **Increase timer resolution** | Enable for better response and countdown timer accuracy. Disable if companion or playback is bogged down.
+**Number of clip names to reserve** | Enter how many slots to reserve for clip names. Maximum is 50 <sup>[1]</sup>
+**Display · for empty clips?** | Enable to replace empty clip name with · (bullet). Otherwise leave name blank.
+
+[1]: Companion displays $NA when a dynamic variable is not set. The playback clip names for VLC are dynamic so if your playlist has 5 items, entering $(vlc:pname_6) will show $NA. By reserving a certain number of clip names, the module will add blank (or bullet) entries for those clips that are not in the VLC playlist. *Warning:* If you send VLC a command to Play an empty ID, it will ignore the ID and act like a simple Play command.
 
 ## Actions
 Action | Description
 -----------------|---------------
 **Play** | Play the last active item
-**Play ID** | Play a specific item from the playlist
+**Play ID** | Play a specific item from the playlist. If ID does not exist, this command acts like a simple **Play** command.
 **Stop** | Stop playback
 **Pause / Resume** | Toggle pause. If state is 'stopped' then play current item. If no current item then play the 1st item.
 **Next** | Jump to next item
@@ -63,7 +67,7 @@ Feedback | Description
 **Color for Full Screen Mode** | Change button colors when player is Full Screen
 
 ## Configuring VLC
-Open the Tools-->Preferences window. 
+Open the Tools-->Preferences window.
 
 On the Main Interfaces page, Check 'Web' option box, higlighted in red.
 

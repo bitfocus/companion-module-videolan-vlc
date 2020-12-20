@@ -1,5 +1,6 @@
 // 'use strict';
 var rest_client 	= require('node-rest-client').Client;
+var crypto			= require('crypto');
 var instance_skel = require('../../instance_skel');
 var debug;
 var log;
@@ -43,13 +44,53 @@ function instance(system, id, config) {
 
 instance.prototype.MSTATUS_CHAR = {
 	running: "\u23F5",
-	paused: "\u23F8",
-	stopped: "\u23F9"
+	paused:  "\u23F8",
+	stopped: "\u23F9",
+	empty: 	 "\u00b7"
+};
+
+instance.prototype.NO_CLIP = {
+	title: '',
+	num: 0,
+	length: 0,
+	position: 0,
+	time: 0
+};
+
+// hash the playlist name and position
+// to detect if we need to update our copy
+instance.prototype.makeHash = function (list) {
+	var hasher = crypto.createHash('md5');
+
+	list.forEach(function(item, pos) {
+		hasher.update(item.name + pos);
+	});
+
+	return hasher.digest('hex');
+};
+
+instance.prototype.show_error = function (err) {
+	var self = this;
+
+	if (!self.disabled && self.lastStatus != self.STATUS_ERROR) {
+		self.status(self.STATUS_ERROR, err.message);
+		self.log('error',err.message);
+		self.reset_variables();
+		self.updateStatus();
+		self.lastStatus = self.STATUS_ERROR;
+	}
 };
 
 instance.prototype.updateConfig = function (config) {
 	var self = this;
 
+	// remove any 'reserved' name variables
+	var oldClear = self.config.pre_clear;
+	if (oldClear) {
+		self.pre_clear = 0;
+		self.clearList(oldClear);
+	}
+	// before changing config
 	self.config = config;
 	self.startup();
 };
@@ -83,11 +124,34 @@ instance.prototype.titleMunge = function(t) {
 	return (t.length > 20 ? t = t.slice(0,10) + t.slice(-10) : t);
 };
 
+instance.prototype.reset_variables = function() {
+	var self = this;
+
+
+	self.pre_clear = self.config.pre_clear;
+	self.use_bullet = self.config.use_bullet;
+	self.clearList(0);
+
+	self.PlayIDs = [];
+	self.PlayList = {};
+	self.PlayListCheck = '';
+	self.PlayState = self.VLC_IS_STOPPED;
+	self.NowPlaying = 0;
+	self.PollCount = 0;
+	self.vlcVersion = 'Not Connected';
+	self.PlayStatus = self.NO_CLIP;
+	self.PlayLoop = false;
+	self.PlayRepeat = false;
+	self.PlayRandom = false;
+	self.PlayFull = false;
+	self.PollWaiting = 0;
+	self.lastStatus = -1;
+	self.disabled = false;
+};
+
 instance.prototype.clear = function () {
 	var self = this;
 
-	self.status(self.STATUS_WARNING,"Initializing");
-	
 	if (self.plPoll) {
 		clearInterval(self.plPoll);
 		delete self.plPoll;
@@ -99,32 +163,25 @@ instance.prototype.clear = function () {
 	if (self.client) {
 		delete self.client;
 	}
-	self.baseURL = '';
-	self.PlayIDs = [];
-	self.PlayList = {};
-	self.PlayState = self.VLC_IS_STOPPED;
-	self.NowPlaying = 0;
-	self.PollCount = 0;
-	self.vlcVersion = '';
-	self.PlayStatus = {
-		title: '',
-		num: 0,
-		length: 0,
-		position: 0,
-		time: 0
-	};
 	self.hires = (self.config.hires ? true : false);
-	self.PlayLoop = false;
-	self.PlayRepeat = false;
-	self.PlayRandom = false;
-	self.PlayFull = false;
-	self.lastStatus = -1;
+	self.baseURL = '';
+
+	self.reset_variables();
+};
+
+instance.prototype.clear_vars = function() {
+	var self = this;
+
+	self.reset_variables();
+	self.init_variables();
 };
 
 instance.prototype.startup = function() {
 	var self = this;
 
 	self.clear();
+	self.status(self.STATUS_WARNING,"Initializing");
+
 	if (self.config.host && self.config.port) {
 		self.init_client();
 		self.init_variables();
@@ -152,12 +209,7 @@ instance.prototype.init_client = function() {
 
 	self.status(self.STATUS_WARNING, 'Connecting');
 
-	self.client.on('error', function(err) {
-		if (self.lastStatus != self.STATUS_ERR) {
-			self.status(self.STATUS_ERROR, err);
-			self.lastStatus = self.STATUS_ERR;
-		}
-	});
+	self.client.on('error', self.show_error.bind(self));
 };
 
 // feedback definitions
@@ -197,9 +249,52 @@ instance.prototype.init_feedbacks = function() {
 
 				if (self.PlayState == parseInt(options.playStat)) {
 					ret = { color: options.fg, bgcolor: options.bg };
-				} else if (self.PlayState == parseInt(options.playStat)) {
-					ret = { color: options.fg, bgcolor: options.bg };
-				} else if (self.PlayState == parseInt(options.playStat)) {
+				}
+				return ret;
+			}
+		},
+		c_cue: {
+			label: 'Color for Item state',
+			description: 'Set Button colors for single Item State',
+			options: [{
+					type: 'colorpicker',
+					label: 'Foreground color',
+					id: 'fg',
+					default: '16777215'
+				},
+				{
+					type: 'colorpicker',
+					label: 'Background color',
+					id: 'bg',
+					default: rgb(0, 128, 0)
+				},
+				{
+					type: 'textinput',
+					label: 'Clip Number',
+					id: 'clip',
+					default: 1,
+					regex: self.REGEX_NUMBER
+				},
+				{
+					type: 'dropdown',
+					label: 'Which Status?',
+					id: 'playStat',
+					default: '2',
+					choices: [
+						{ id: '0', label: 'Stopped' },
+						{ id: '1', label: 'Paused' },
+						{ id: '2', label: 'Playing'}
+					]
+				}],
+			callback: function(feedback, bank) {
+				var ret = {};
+				var options = feedback.options;
+
+				if (self.PlayStatus.num == parseInt(options.clip)) {
+					if (self.PlayState == parseInt(options.playStat)) {
+						ret = { color: options.fg, bgcolor: options.bg };
+					}
+				} else if (0 == parseInt(options.playStat)) {  // not playing
 					ret = { color: options.fg, bgcolor: options.bg };
 				}
 				return ret;
@@ -340,38 +435,66 @@ instance.prototype.init_variables = function() {
 	self.setVariableDefinitions(variables);
 };
 
+instance.prototype.clearList = function(oldLength) {
+	var self = this;
+
+	var pc = self.pre_clear;
+	var empty = self.use_bullet ? self.MSTATUS_CHAR.empty : '';
+	var newLength = self.PlayIDs ? self.PlayIDs.length : 0;
+	var emptyFrom = newLength < pc ? newLength+1 : pc;
+
+	// add placeholder char for empty clips
+	while (pc > newLength && emptyFrom <= pc) {
+		self.setVariable('pname_' + parseInt(emptyFrom),empty);
+		emptyFrom++;
+	}
+
+	// remove any variables left over
+	while (oldLength > emptyFrom) {
+		self.setVariable('pname_' + (parseInt(oldLength)));
+		oldLength--;
+	}
+
+};
+
 instance.prototype.updatePlaylist = function(data) {
 	var self = this;
 	var pList = JSON.parse(data.toString());
 	var newList;
+	var PlayList = {};
+	var oldLength = self.PlayIDs.length;
 
 	if (pList.children) {
 		newList = pList.children;
 	}
 
-	for (var i in newList) {
-		if (newList[i].name == 'Playlist') {
-			var nl = newList[i].children;
-			var pl = self.PlayIDs;
-			if (nl.length != pl.length || pl.length == 0 || nl[0].id != pl[0]) {
-				self.PlayList = {};
-				var m, p;
-				for (p in pl) {
-					self.setVariable('pname_' + (parseInt(p) + 1));
-				}
-				pl = [];
-				for (p in newList[i].children) {
-					m = new vlc_MediaInfo(newList[i].children[p]);
-					self.PlayList[m.id] = m;
-					pl.push(m.id);
-				}
-				
-				self.PlayIDs = pl; 
-				for (p in self.PlayIDs) {
-					self.setVariable('pname_' + (parseInt(p) + 1), self.PlayList[self.PlayIDs[p]].name);
+	if (newList.length>0) {
+		var nl = newList[0].children;
+		var pc = self.makeHash(nl);
+		var pi = [];
+
+		if (pc != self.PlayListCheck) {
+			var m, p;
+			for (p in nl) {
+				m = new vlc_MediaInfo(nl[p]);
+				PlayList[m.id] = m;
+				pi.push(m.id);
+			}
+
+			for (p in pi) {
+				var oName = self.PlayList[self.PlayIDs[p]] ? self.PlayList[self.PlayIDs[p]].name : '';
+				var nName = PlayList[pi[p]].name;
+				if (oName != nName) {
+					self.setVariable('pname_' + (parseInt(p) + 1), nName);
 				}
 			}
+			self.PlayIDs = pi;
+			self.PlayList = PlayList;
+			self.PlayListCheck = pc;
 		}
+	}
+	if (self.PlayIDs.length != oldLength) {
+		self.clearList(oldLength);
 	}
 };
 
@@ -429,13 +552,17 @@ instance.prototype.updatePlayback = function(data) {
 	var self = this;
 
 	var stateChanged = false;
+	// hmmm. parsing the buffer directly sometimes threw an error
+	// so I extracted as a string first to debug and haven't seen
+	// the error since. Is this a glitch in the JSON routine?
+	var debuf = data.toString();
+	var pbInfo = JSON.parse(debuf);
 
-	var pbInfo = JSON.parse(data.toString());
 	var wasPlaying = pbStat({ currentplid: self.NowPlaying, position: self.PlayStatus.position });
 	self.vlcVersion = pbInfo.version;
 
 	function pbStat(info) {
-		return info.currentplid + ':' + info.position + ':' + self.PlayState;
+		return info.currentplid + ':' + info.position + ':' + self.PlayState + ':' + self.PlayStatus.title;
 	}
 
 	///
@@ -447,25 +574,29 @@ instance.prototype.updatePlayback = function(data) {
 	stateChanged = stateChanged || (self.PlayRandom != (self.PlayRandom = (pbInfo.random ? true : false)));
 	stateChanged = stateChanged || (self.PlayFull != (self.PlayFull = (pbInfo.fullscreen ? true : false)));
 	if (pbInfo.currentplid < 2) {
-		self.PlayStatus.title = '';
-		self.PlayStatus.length = 0;
-		self.PlayStatus.position = 0;
-		self.PlayStatus.time = 0;
-		self.PlayStatus.num = 0;
-		self.NowPlaying = pbInfo.currentplid;
+		self.NowPlaying = -1;
+		self.PlayStatus = self.NO_CLIP;
 	} else if (self.PlayIDs.length > 0) {
-		self.NowPlaying = pbInfo.currentplid;
-		self.PlayStatus.title = self.titleMunge(self.PlayList[self.NowPlaying].name);
-		self.PlayStatus.length = pbInfo.length;
-		self.PlayStatus.position = pbInfo.position;
-		self.PlayStatus.time = pbInfo.time;
-		self.PlayStatus.num = 1 + self.PlayIDs.indexOf(pbInfo.currentplid.toString());
+		if (pbInfo.currentplid) {
+			self.NowPlaying = pbInfo.currentplid;
+			var t = self.PlayList[self.NowPlaying] ? self.titleMunge(self.PlayList[self.NowPlaying].name) : '';
+			self.PlayStatus = {
+				title: t,
+				num: 1 + self.PlayIDs.indexOf(pbInfo.currentplid.toString()),
+				length: pbInfo.length,
+				position: pbInfo.position,
+				time: pbInfo.time
+			};
+		} else {
+			self.NowPlaying = -1;
+			self.PlayStatus = self.NO_CLIP;
+		}
 	}
 
 	if (stateChanged) {
 		self.checkFeedbacks();
 	}
-	
+
 	if (pbStat(pbInfo) != wasPlaying) {
 		self.updateStatus();
 	}
@@ -475,7 +606,15 @@ instance.prototype.updatePlayback = function(data) {
 instance.prototype.getRequest = function(url, cb) {
 	var self = this;
 	var emsg = '';
-	
+
+	// wait until prior request is finished or timed-out
+	// to reduce stacking of unanswered requests
+	if (self.PollWaiting > 0) {
+		return;
+	}
+
+	self.PollWaiting++;
+
 	self.client.get(self.baseURL + url, self.auth, function(data, response) {
 		if (response.statusCode == 401) {
 			// error/not found
@@ -486,11 +625,7 @@ instance.prototype.getRequest = function(url, cb) {
 				self.lastStatus = self.STATUS_WARNING;
 			}
 		} else if (response.statusCode != 200) {
-			if (self.lastStatus != self.STATUS_ERROR) {
-				self.status(self.STATUS_ERROR, response.statusMessage);
-				self.log('error', response.statusMessage);
-				self.lastStatus = self.STATUS_ERROR;
-			}
+			self.show_error( { message: response.statusMessage } );
 		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
@@ -499,34 +634,38 @@ instance.prototype.getRequest = function(url, cb) {
 			}
 			cb.call(self,data);
 		}
-	}).on('error', function (err) {
-		if (self.lastStatus != self.STATUS_ERROR) {
-			emsg = err.message;
-			self.log('error', emsg);
-			self.status(self.STATUS_ERROR, emsg);
-			self.lastStatus = self.STATUS_ERROR;
-		}
+		self.PollWaiting--;
+	}).on('error', function(err) {
+		self.show_error(err);
+		self.PollWaiting--;
 	});
 };
 
 instance.prototype.pollPlaylist = function() {
 	var self = this;
-	var data;
-		
-	self.getRequest('/requests/playlist.json', self.updatePlaylist);
 
+	// don't ask until connected (we have a valid status response)
+	if (self.lastStatus == self.STATUS_OK) {
+		self.getRequest('/requests/playlist.json', self.updatePlaylist);
+	}
 };
 
 
 instance.prototype.pollPlayback = function() {
 	var self = this;
 	var data;
+	var pollNow = false;
+	var pollTicks = ((self.lastStatus == self.STATUS_OK) ? 5 : 50);
 
-	// poll @ 500ms if not playing
-	if (((self.PlayState != self.VLC_IS_STOPPED) && (self.hires))  || (self.PollCount % 5) == 0) {
+	// poll every tick if not stopped and hires
+	pollNow = ((self.PlayState != self.VLC_IS_STOPPED) && self.hires);
+	// or poll every 500ms if connected and not playing
+	// every 5 seconds if not connected to allow for timeouts
+	pollNow = pollNow || 0 == (self.PollCount % pollTicks);
+	if (pollNow) {
 		self.getRequest('/requests/status.json', self.updatePlayback);
 	}
-	
+
 	self.PollCount += 1;
 };
 
@@ -534,7 +673,9 @@ instance.prototype.pollPlayback = function() {
 // When module gets deleted
 instance.prototype.destroy = function() {
 	var self = this;
+
 	self.clear();
+	self.disabled = true;
 	self.status(self.STATUS_UNKNOWN,'Disabled');
 
 	debug("destroy");
@@ -572,6 +713,25 @@ instance.prototype.config_fields = function () {
 			label: 'Increase timer resolution?',
 			tooltip: 'Poll playback counter more frequently\nfor better response and resolution',
 			default: false,
+			width:4
+		},
+		{
+			type: 'number',
+			id: 'pre_clear',
+			label: 'Number of clip names to reserve',
+			tooltip: 'Always create this many clip names.\nPrevents $NA when clip name is empty.',
+			default: 0,
+			min: 0,
+			max: 50,
+			width: 8
+		},
+		{
+			type: 'checkbox',
+			id: 'use_bullet',
+			label: 'Use \u00b7 for empty?',
+			tooltip: 'Display \u00b7 for empty clip names\notherwise display blank.',
+			default: false,
+			width: 4
 		}
 	];
 };
@@ -814,7 +974,7 @@ instance.prototype.actions = function(system) {
 				options: [
 					{
 						type: 'textinput',
-						label: 'Clip Nr.',
+						label: 'Clip Number',
 						id: 'clip',
 						default: 1,
 						regex: self.REGEX_NUMBER
@@ -895,18 +1055,14 @@ instance.prototype.action = function(action) {
 				self.status(self.STATUS_OK);
 				self.lastStatus = self.STATUS_OK;
 			}
-		}).on('error', function (err) {
-			if (self.lastStatus != self.STATUS_ERROR) {
-				self.log('error', err.message);
-				self.status(self.STATUS_ERROR, err.message);
-				self.lastStatus = self.STATUS_ERROR;
-			}
-		});
-		// force an update if stopped
-		self.PollCount = self.PollCount + (3 - (self.PollCount % 5));
+		}).on('error', 	self.show_error.bind(self));
+
+		// force an update if command sent while VLC stopped
+		self.PollCount = self.PollCount + (5 - (self.PollCount % 5));
 	}
 
 };
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
+
