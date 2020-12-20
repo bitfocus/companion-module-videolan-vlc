@@ -57,7 +57,9 @@ instance.prototype.NO_CLIP = {
 	time: 0
 };
 
-instance.prototype.makeCheck = function (list) {
+// hash the playlist name and position
+// to detect if we need to update our copy
+instance.prototype.makeHash = function (list) {
 	var hasher = crypto.createHash('md5');
 
 	list.forEach(function(item, pos) {
@@ -468,12 +470,10 @@ instance.prototype.updatePlaylist = function(data) {
 
 	if (newList.length>0) {
 		var nl = newList[0].children;
-		var pc = self.makeCheck(nl);
-		//var pl = self.PlayIDs.length;
+		var pc = self.makeHash(nl);
 		var pi = [];
 
 		if (pc != self.PlayListCheck) {
-//		if (nl.length != pl || pl == 0 || nl[0].id != self.PlayIDs[0]) {
 			var m, p;
 			for (p in nl) {
 				m = new vlc_MediaInfo(nl[p]);
