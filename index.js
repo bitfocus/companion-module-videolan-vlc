@@ -149,7 +149,7 @@ instance.prototype.reset_variables = function() {
 	self.disabled = false;
 };
 
-instance.prototype.clear = function () {
+instance.prototype.clear = function (closing) {
 	var self = this;
 
 	if (self.plPoll) {
@@ -163,10 +163,14 @@ instance.prototype.clear = function () {
 	if (self.client) {
 		delete self.client;
 	}
-	self.hires = (self.config.hires ? true : false);
-	self.baseURL = '';
 
-	self.reset_variables();
+	// don't recharge variables if shutting down
+	if (!closing) {
+		self.hires = (self.config.hires ? true : false);
+		self.baseURL = '';
+
+		self.reset_variables();
+	}
 };
 
 instance.prototype.clear_vars = function() {
@@ -674,7 +678,7 @@ instance.prototype.pollPlayback = function() {
 instance.prototype.destroy = function() {
 	var self = this;
 
-	self.clear();
+	self.clear(true);
 	self.disabled = true;
 	self.status(self.STATUS_UNKNOWN,'Disabled');
 
