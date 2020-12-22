@@ -39,3 +39,6 @@ See HELP.md and LICENSE
   * API labels change with locale/language, so it may not be labeled "Playlist" (issue #20)
 * Add option to override $NA for a defined number of playlist items.
 * Add ID option for feedback colors
+
+**V1.1.6**
+* Prevent re-initializing variables if module is being disabled
