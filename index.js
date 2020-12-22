@@ -630,6 +630,14 @@ instance.prototype.getRequest = function(url, cb) {
 			}
 		} else if (response.statusCode != 200) {
 			self.show_error( { message: response.statusMessage } );
+		} else if (data[0]!='{') {
+			// if VLC password is empty, it sends an HTML page instead of JSON
+			if (self.lastStatus != self.STATUS_WARNING) {
+				emsg = 'Set the VLC Password';
+				self.status(self.STATUS_WARNING, emsg);
+				self.log('error', emsg);
+				self.lastStatus = self.STATUS_WARNING;
+			}
 		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);

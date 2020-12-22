@@ -42,3 +42,6 @@ See HELP.md and LICENSE
 
 **V1.1.6**
 * Prevent re-initializing variables if module is being disabled
+
+**V1.1.7**
+* Catch non-JSON response when VLC's password is empty
