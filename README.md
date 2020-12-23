@@ -41,7 +41,7 @@ See HELP.md and LICENSE
 * Add ID option for feedback colors
 
 **V1.1.6**
-* Prevent re-initializing variables if module is being disabled
+* Prevent re-initializing variables while the module is being disabled
 
 **V1.1.7**
 * Catch non-JSON response when VLC's password is empty
