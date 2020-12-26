@@ -556,9 +556,9 @@ instance.prototype.updatePlayback = function(data) {
 	var self = this;
 
 	var stateChanged = false;
-	// hmmm. parsing the buffer directly sometimes threw an error
-	// so I extracted as a string first to debug and haven't seen
-	// the error since. Is this a glitch in the JSON routine?
+	// hmmm. parsing the buffer directly frequently threw an error
+	// so I extracted as a string first to debug and it seems
+	// more robust this way. A glitch in JSON.parse?
 	var debuf = data.toString();
 	var pbInfo = JSON.parse(debuf);
 
@@ -620,6 +620,7 @@ instance.prototype.getRequest = function(url, cb) {
 	self.PollWaiting++;
 
 	self.client.get(self.baseURL + url, self.auth, function(data, response) {
+		// data is a Buffer
 		if (response.statusCode == 401) {
 			// error/not found
 			if (self.lastStatus != self.STATUS_WARNING) {
@@ -628,10 +629,12 @@ instance.prototype.getRequest = function(url, cb) {
 				self.log('error', emsg);
 				self.lastStatus = self.STATUS_WARNING;
 			}
-		} else if (response.statusCode != 200) {
+		} else if (response.statusCode != 200) { // page OK
 			self.show_error( { message: response.statusMessage } );
-		} else if (data[0]!='{') {
-			// if VLC password is empty, it sends an HTML page instead of JSON
+		} else if (data[0] != '{') {			// but is it JSON?
+			// check 1st character of data for JSON open brace
+			// otherwise it is probably the HTML page from VLC
+			// complaining about the password being empty
 			if (self.lastStatus != self.STATUS_WARNING) {
 				emsg = 'Set the VLC Password';
 				self.status(self.STATUS_WARNING, emsg);
