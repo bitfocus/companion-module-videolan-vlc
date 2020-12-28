@@ -636,7 +636,7 @@ instance.prototype.getRequest = function(url, cb) {
 			// otherwise it is probably the HTML page from VLC
 			// complaining about the password being empty
 			if (self.lastStatus != self.STATUS_WARNING) {
-				emsg = 'Set the VLC Password';
+				emsg = 'Set the Lua HTTP Password in VLC';
 				self.status(self.STATUS_WARNING, emsg);
 				self.log('error', emsg);
 				self.lastStatus = self.STATUS_WARNING;
