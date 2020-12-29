@@ -631,8 +631,8 @@ instance.prototype.getRequest = function(url, cb) {
 			}
 		} else if (response.statusCode != 200) { // page OK
 			self.show_error( { message: response.statusMessage } );
-		} else if (data[0] != '{') {			// but is it JSON?
-			// check 1st character of data for JSON open brace
+		} else if (data[0] != 123) {	// but is it JSON?
+			// check 1st character of data for JSON open brace '{'
 			// otherwise it is probably the HTML page from VLC
 			// complaining about the password being empty
 			if (self.lastStatus != self.STATUS_WARNING) {
