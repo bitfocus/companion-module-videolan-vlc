@@ -45,3 +45,4 @@ See HELP.md and LICENSE
 
 **V1.1.7**
 * Catch non-JSON response when VLC's password is empty
+* Additional documentation
