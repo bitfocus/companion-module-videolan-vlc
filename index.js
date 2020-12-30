@@ -234,7 +234,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(128, 0, 0)
+				default: self.rgb(128, 0, 0)
 			},
 			{
 				type: 'dropdown',
@@ -270,7 +270,7 @@ instance.prototype.init_feedbacks = function() {
 					type: 'colorpicker',
 					label: 'Background color',
 					id: 'bg',
-					default: rgb(0, 128, 0)
+					default: self.rgb(0, 128, 0)
 				},
 				{
 					type: 'textinput',
@@ -317,7 +317,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(0, 128, 128)
+				default: self.rgb(0, 128, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -337,7 +337,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(128, 0, 128)
+				default: self.rgb(128, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -357,7 +357,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(0, 0, 128)
+				default: self.rgb(0, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -377,7 +377,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(204, 0, 128)
+				default: self.rgb(204, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -778,7 +778,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(0, 128, 0),
+						bg: self.rgb(0, 128, 0),
 						playStat: '2'
 					}
 				}
@@ -808,7 +808,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 128, 0),
+						bg: self.rgb(128, 128, 0),
 						playStat: '1'
 					}
 				}
@@ -837,7 +837,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 0, 0),
+						bg: self.rgb(128, 0, 0),
 						playStat: '0'
 					}
 				}
@@ -864,7 +864,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_loop',
 					options: {
 						fg: '16777215',
-						bg: rgb(0,128,128)
+						bg: self.rgb(0,128,128)
 					}
 				}
 			]
@@ -890,7 +890,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_repeat',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 0, 128),
+						bg: self.rgb(128, 0, 128),
 						playStat: '0'
 					}
 				}
@@ -917,7 +917,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_random',
 					options: {
 						fg: '16777215',
-						bg: rgb(0, 0, 128),
+						bg: self.rgb(0, 0, 128),
 						playStat: '0'
 					}
 				}
@@ -944,7 +944,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_full',
 					options: {
 						fg: '16777215',
-						bg: rgb(204, 0, 128),
+						bg: self.rgb(204, 0, 128),
 						playStat: '0'
 					}
 				}
