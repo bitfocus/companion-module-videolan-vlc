@@ -234,7 +234,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(128, 0, 0)
+				default: self.rgb(128, 0, 0)
 			},
 			{
 				type: 'dropdown',
@@ -270,7 +270,7 @@ instance.prototype.init_feedbacks = function() {
 					type: 'colorpicker',
 					label: 'Background color',
 					id: 'bg',
-					default: rgb(0, 128, 0)
+					default: self.rgb(0, 128, 0)
 				},
 				{
 					type: 'textinput',
@@ -317,7 +317,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(0, 128, 128)
+				default: self.rgb(0, 128, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -337,7 +337,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(128, 0, 128)
+				default: self.rgb(128, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -357,7 +357,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(0, 0, 128)
+				default: self.rgb(0, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -377,7 +377,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: rgb(204, 0, 128)
+				default: self.rgb(204, 0, 128)
 			}],
 			callback: function(feedback, bank) {
 				var options = feedback.options;
@@ -556,9 +556,9 @@ instance.prototype.updatePlayback = function(data) {
 	var self = this;
 
 	var stateChanged = false;
-	// hmmm. parsing the buffer directly sometimes threw an error
-	// so I extracted as a string first to debug and haven't seen
-	// the error since. Is this a glitch in the JSON routine?
+	// hmmm. parsing the buffer directly frequently threw an error
+	// so I extracted as a string first to debug and it seems
+	// more robust this way. A glitch in JSON.parse?
 	var debuf = data.toString();
 	var pbInfo = JSON.parse(debuf);
 
@@ -620,6 +620,7 @@ instance.prototype.getRequest = function(url, cb) {
 	self.PollWaiting++;
 
 	self.client.get(self.baseURL + url, self.auth, function(data, response) {
+		// data is a Buffer
 		if (response.statusCode == 401) {
 			// error/not found
 			if (self.lastStatus != self.STATUS_WARNING) {
@@ -628,8 +629,18 @@ instance.prototype.getRequest = function(url, cb) {
 				self.log('error', emsg);
 				self.lastStatus = self.STATUS_WARNING;
 			}
-		} else if (response.statusCode != 200) {
+		} else if (response.statusCode != 200) { // page OK
 			self.show_error( { message: response.statusMessage } );
+		} else if (data[0] != 123) {	// but is it JSON?
+			// check 1st character of data for JSON open brace '{'
+			// otherwise it is probably the HTML page from VLC
+			// complaining about the password being empty
+			if (self.lastStatus != self.STATUS_WARNING) {
+				emsg = 'Set the Lua HTTP Password in VLC';
+				self.status(self.STATUS_WARNING, emsg);
+				self.log('error', emsg);
+				self.lastStatus = self.STATUS_WARNING;
+			}
 		} else {
 			if (self.lastStatus != self.STATUS_OK) {
 				self.status(self.STATUS_OK);
@@ -767,7 +778,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(0, 128, 0),
+						bg: self.rgb(0, 128, 0),
 						playStat: '2'
 					}
 				}
@@ -797,7 +808,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 128, 0),
+						bg: self.rgb(128, 128, 0),
 						playStat: '1'
 					}
 				}
@@ -826,7 +837,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_status',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 0, 0),
+						bg: self.rgb(128, 0, 0),
 						playStat: '0'
 					}
 				}
@@ -853,7 +864,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_loop',
 					options: {
 						fg: '16777215',
-						bg: rgb(0,128,128)
+						bg: self.rgb(0,128,128)
 					}
 				}
 			]
@@ -879,7 +890,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_repeat',
 					options: {
 						fg: '16777215',
-						bg: rgb(128, 0, 128),
+						bg: self.rgb(128, 0, 128),
 						playStat: '0'
 					}
 				}
@@ -906,7 +917,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_random',
 					options: {
 						fg: '16777215',
-						bg: rgb(0, 0, 128),
+						bg: self.rgb(0, 0, 128),
 						playStat: '0'
 					}
 				}
@@ -933,7 +944,7 @@ instance.prototype.init_presets = function () {
 					type:    'c_full',
 					options: {
 						fg: '16777215',
-						bg: rgb(204, 0, 128),
+						bg: self.rgb(204, 0, 128),
 						playStat: '0'
 					}
 				}

@@ -77,3 +77,4 @@ On the Main Interfaces-->Lua page, set the password for Companion access.
 
 ![setup2](images/VLCSetup2.png "Setup2")
 
+***Note:** VLC must be closed and restarted for the password to take effect.*
