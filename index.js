@@ -679,20 +679,6 @@ instance.prototype.getRequest = function(url, cb) {
 		} else if (data[0] != 123) {	// but is it JSON?
 			// check 1st character of data for JSON open brace '{'
 			// otherwise it is probably an HTML page from VLC
-/* 			var resp = data.toString();
-			var vlcErr = resp.match(/!-- (VLC_.*) --/);
-
-			if (vlcErr.length>1) {
-				// VLC Lua password empty?
-				if (vlcErr[1] == 'VLC_PASSWORD_NOT_SET') {
-					emsg = 'Set the Lua HTTP Password in VLC';
-				} else {
-					emsg = 'VLC says ' + vlcErr[1];
-				}
-			} else {
-				emsg = resp;
-			}
- */
 			// apparently password is not the only issue
 			// so forward VLC response to logs
 			emsg = data.toString();
