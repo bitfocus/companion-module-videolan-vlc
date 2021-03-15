@@ -433,6 +433,26 @@ instance.prototype.init_variables = function() {
 		{
 			label: 'Playing Item Time left, Second',
 			name:  'r_ss'
+		},
+		{
+			label: 'Playing Item Elapsed Time, variable size',
+			name:  'e_time'
+		},
+		{
+			label: 'Playing Item Elapsed Time, HH:MM:SS',
+			name:  'e_hhmmss'
+		},
+		{
+			label: 'Playing Item Elapsed Time, Hour',
+			name:  'e_hh'
+		},
+		{
+			label: 'Playing Item Elapsed Time, Minute',
+			name:  'e_mm'
+		},
+		{
+			label: 'Playing Item Elapsed Time, Second',
+			name:  'e_ss'
 		}
 	];
 
@@ -509,10 +529,29 @@ instance.prototype.updateStatus = function() {
 	var ps = self.PlayStatus;
 	var state = self.PlayState;
 
+	var tElapsed = ps.length * ps.position;
+
+	var eh = Math.floor(tElapsed / 3600);
+	var ehh = ('00' + eh).slice(-2);
+	var em = Math.floor(tElapsed / 60) % 60;
+	var emm = ('00' + em).slice(-2);
+	var es = Math.floor(tElapsed % 60);
+	var ess = ('00' + es).slice(-2);
+	var eft = '';
+
+	if (ehh > 0) {
+		eft = ehh + ":";
+	}
+	if (emm > 0) {
+		eft = eft + emm + ":";
+	}
+	eft = eft + ess;
+
 	var tLeft = ps.length * (1 - ps.position);
 	if (tLeft > 0) {
 		tLeft += tenths;
 	}
+
 	var h = Math.floor(tLeft / 3600);
 	var hh = ('00' + h).slice(-2);
 	var m = Math.floor(tLeft / 60) % 60;
@@ -544,11 +583,17 @@ instance.prototype.updateStatus = function() {
 	self.setVariable('r_stat', state == self.VLC_IS_PLAYING ? self.MSTATUS_CHAR.running :
 							state == self.VLC_IS_PAUSED ? self.MSTATUS_CHAR.paused :
 							self.MSTATUS_CHAR.stopped);
-	self.setVariable('r_hhmmss',hh + ":" + mm + ":" + ss);
+	self.setVariable('r_hhmmss', hh + ":" + mm + ":" + ss);
 	self.setVariable('r_hh', hh);
 	self.setVariable('r_mm', mm);
 	self.setVariable('r_ss', ss);
 	self.setVariable('r_left',ft);
+	self.setVariable('e_hhmmss', ehh + ":" + emm + ":" + ess);
+	self.setVariable('e_hh', ehh);
+	self.setVariable('e_mm', emm);
+	self.setVariable('e_ss', ess);
+	self.setVariable('e_time', eft);
+
 	self.checkFeedbacks();
 };
 
@@ -634,20 +679,6 @@ instance.prototype.getRequest = function(url, cb) {
 		} else if (data[0] != 123) {	// but is it JSON?
 			// check 1st character of data for JSON open brace '{'
 			// otherwise it is probably an HTML page from VLC
-/* 			var resp = data.toString();
-			var vlcErr = resp.match(/!-- (VLC_.*) --/);
-
-			if (vlcErr.length>1) {
-				// VLC Lua password empty?
-				if (vlcErr[1] == 'VLC_PASSWORD_NOT_SET') {
-					emsg = 'Set the Lua HTTP Password in VLC';
-				} else {
-					emsg = 'VLC says ' + vlcErr[1];
-				}
-			} else {
-				emsg = resp;
-			}
- */
 			// apparently password is not the only issue
 			// so forward VLC response to logs
 			emsg = data.toString();

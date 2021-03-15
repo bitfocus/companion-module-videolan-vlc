@@ -53,6 +53,11 @@ Variable | Description
 **$(INSTANCENAME:r_hh)** | Hours left for Playing Item
 **$(INSTANCENAME:r_mm)** | Minutes left for Playing Item
 **$(INSTANCENAME:r_ss)** | Seconds left for Playing Item
+**$(INSTANCENAME:e_time)** | Elapsed time for Playing Item, variable size
+**$(INSTANCENAME:e_hhmmss)** | Elapsed time for Playing Item as "HH:MM:SS"
+**$(INSTANCENAME:e_hh)** | Elapsed time Hours for Playing Item
+**$(INSTANCENAME:e_mm)** | Elapsed time Minutes for Playing Item
+**$(INSTANCENAME:e_ss)** | Elapsed time Seconds for Playing Item
 **$(INSTANCENAME:pname_{num})** | Title of the Playlist Item {num}. Limited to 20 characters. If longer this will display the first 10 and the last 10 characters of the title.
 
 To use these, replace INSTANCENAME with the label/name of your module instance.

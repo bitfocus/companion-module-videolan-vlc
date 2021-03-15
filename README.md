@@ -36,7 +36,7 @@ See HELP.md and LICENSE
 * Catch stray error when module is disabled
 * Catch empty playback response (issue #21)
 * Assume "Playlist" is the 1st list instead of checking the label.
-  * API labels change with locale/language, so it may not be labeled "Playlist" (issue #20)
+* API labels change with locale/language, so it may not be labeled "Playlist" (issue #20)
 * Add option to override $NA for a defined number of playlist items.
 * Add ID option for feedback colors
 
@@ -46,4 +46,9 @@ See HELP.md and LICENSE
 **V1.1.7**
 * Catch non-JSON response when VLC's password is empty
 * Additional documentation
+
+**V1.1.8**
 * adjust rgb to self.rgb
+
+**V1.1.9**
+* Add variables for Time Elapsed
