@@ -1046,6 +1046,7 @@ instance.prototype.actions = function(system) {
 		'pause':  { label: 'Pause / Resume'},
 		'next':   { label: 'Next'},
 		'prev':   { label: 'Previous'},
+		'clear':  { label: 'Clear Playlist'},
 		'full':   { label: 'Full Screen'},
 		'loop':   { label: 'Loop'},
 		'shuffle':{ label: 'Shuffle'},
@@ -1093,6 +1094,10 @@ instance.prototype.action = function(action) {
 			cmd = '?command=pl_previous';
 			break;
 
+			case 'clear':
+				cmd = '?command=pl_empty';
+				break;
+
 		case 'full':
 			cmd = '?command=fullscreen';
 			break;
@@ -1126,4 +1131,3 @@ instance.prototype.action = function(action) {
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
-
