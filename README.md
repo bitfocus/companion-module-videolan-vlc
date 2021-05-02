@@ -52,3 +52,6 @@ See HELP.md and LICENSE
 
 **V1.1.9**
 * Add variables for Time Elapsed
+
+**V1.1.10**
+* Add clear playlist, add to playlist, add to playlist and play
