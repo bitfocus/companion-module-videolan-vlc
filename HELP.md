@@ -40,7 +40,9 @@ Action | Description
 **Loop** | Toggle playlist looping mode (cancels repeat mode)
 **Shuffle** | Toggle playlist shuffle (random) mode
 **Repeat** | Toggle item repeat mode (cancels loop mode)
-**Clear Playlist** | Clears all items from the playlist
+**Clear Playlist** | Clear all items from Playlist
+**Add Item** | Add item to Playlist
+**Add and Play** | Add item to Playlist and Play
 
 ## Variables available
 Variable | Description

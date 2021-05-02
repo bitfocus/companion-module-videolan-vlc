@@ -675,7 +675,7 @@ instance.prototype.getRequest = function(url, cb) {
 				self.lastStatus = self.STATUS_WARNING;
 			}
 		} else if (response.statusCode != 200) { // page OK
-			self.show_error( { message: response.statusMessage } );
+			self.show_error({ message: 'Remote says: ' + response.statusMessage + '\nIs this VLC?' });
 		} else if (data[0] != 123) {	// but is it JSON?
 			// check 1st character of data for JSON open brace '{'
 			// otherwise it is probably an HTML page from VLC
@@ -1028,32 +1028,51 @@ instance.prototype.init_presets = function () {
 instance.prototype.actions = function(system) {
 	var self = this;
 	self.system.emit('instance_actions', self.id, {
-
-
-		'play':   { label: 'Play'},
-		'playID': { label: 'Play ID',
-				options: [
-					{
-						type: 'textinput',
-						label: 'Clip Number',
-						id: 'clip',
-						default: 1,
-						regex: self.REGEX_NUMBER
-					}
-				]
-			},
-		'stop':   { label: 'Stop'},
-		'pause':  { label: 'Pause / Resume'},
-		'next':   { label: 'Next'},
-		'prev':   { label: 'Previous'},
-		'clear':  { label: 'Clear Playlist'},
-		'full':   { label: 'Full Screen'},
-		'loop':   { label: 'Loop'},
-		'shuffle':{ label: 'Shuffle'},
-		'repeat': { label: 'Repeat'}
-
-
-	});
+		play: { label: 'Play' },
+		playID: {
+			label: 'Play ID',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clip Number',
+					id: 'clip',
+					default: 1,
+					regex: self.REGEX_NUMBER,
+				},
+			],
+		},
+		stop: { label: 'Stop' },
+		pause: { label: 'Pause / Resume' },
+		next: { label: 'Next' },
+		prev: { label: 'Previous' },
+		clear: { label: 'Clear Playlist' },
+		add: {
+			label: 'Add Item',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clip path/MRL',
+					id: 'mrl',
+					default: '',
+				},
+			],
+		},
+		add_go: {
+			label: 'Add and Play',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clip path/MRL',
+					id: 'mrl',
+					default: '',
+				},
+			],
+		},
+		full: { label: 'Full Screen' },
+		loop: { label: 'Loop' },
+		shuffle: { label: 'Shuffle' },
+		repeat: { label: 'Repeat' }
+	})
 };
 
 instance.prototype.action = function(action) {
@@ -1094,9 +1113,17 @@ instance.prototype.action = function(action) {
 			cmd = '?command=pl_previous';
 			break;
 
-			case 'clear':
-				cmd = '?command=pl_empty';
-				break;
+		case 'clear':
+			cmd = '?command=pl_empty';
+			break;
+
+		case 'add':
+			cmd = '?command=in_enqueue&input=' + opt.mrl;
+			break;
+
+		case 'add_go':
+			cmd = '?command=in_play&input=' + opt.mrl;
+			break;
 
 		case 'full':
 			cmd = '?command=fullscreen';
