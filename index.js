@@ -1158,4 +1158,3 @@ instance.prototype.action = function(action) {
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
-
