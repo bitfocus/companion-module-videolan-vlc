@@ -1068,6 +1068,18 @@ instance.prototype.actions = function(system) {
 				},
 			],
 		},
+		deleteID: {
+			label: 'Delete ID',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clip Number',
+					id: 'clip',
+					default: 1,
+					regex: self.REGEX_NUMBER,
+				},
+			],
+		},
 		full: { label: 'Full Screen' },
 		loop: { label: 'Loop' },
 		shuffle: { label: 'Shuffle' },
@@ -1124,6 +1136,10 @@ instance.prototype.action = function(action) {
 		case 'add_go':
 			cmd = '?command=in_play&input=' + opt.mrl;
 			break;
+
+		case 'deleteID':
+				cmd = '?command=pl_delete&id=' + theClip;
+				break;
 
 		case 'full':
 			cmd = '?command=fullscreen';
