@@ -2,8 +2,6 @@
 var rest_client 	= require('node-rest-client').Client;
 var crypto			= require('crypto');
 var instance_skel = require('../../instance_skel');
-var debug;
-var log;
 
 function instance(system, id, config) {
 	var self = this;
@@ -97,9 +95,6 @@ instance.prototype.updateConfig = function (config) {
 
 instance.prototype.init = function() {
 	var self = this;
-
-	debug = self.debug;
-	log = self.log;
 
 	self.startup();
 };
@@ -739,7 +734,7 @@ instance.prototype.destroy = function() {
 	self.disabled = true;
 	self.status(self.STATUS_UNKNOWN,'Disabled');
 
-	debug("destroy");
+	self.debug("destroy");
 };
 
 // Return config fields for web config
@@ -1085,7 +1080,7 @@ instance.prototype.action = function(action) {
 		theClip = self.PlayIDs[theClip - 1];
 	}
 
-	debug('action: ', action);
+	self.debug('action: ', action);
 
 	switch (action.action) {
 
