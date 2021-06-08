@@ -2,6 +2,7 @@
 var rest_client 	= require('node-rest-client').Client;
 var crypto			= require('crypto');
 var instance_skel = require('../../instance_skel');
+var GetUpgradeScripts = require('./upgrades')
 
 function instance(system, id, config) {
 	var self = this;
@@ -20,25 +21,10 @@ function instance(system, id, config) {
 		self.config._configIdx = -1;
 	}
 
-	self.addUpgradeScript(function () {
-		// just an example - has to live on though
-		if (self.config.host !== undefined) {
-			//self.config.old_host = self.config.host;
-		}
-	});
-
-	self.addUpgradeScript(function () {
-		var changed = false;
-
-		if (self.config.host == undefined || self.config.host == '') {
-			self.config.host = '127.0.0.1';
-			changed = true;
-		}
-		return changed;
-	});
-
 	return self;
 }
+
+instance.GetUpgradeScripts = GetUpgradeScripts
 
 instance.prototype.MSTATUS_CHAR = {
 	running: "\u23F5",
