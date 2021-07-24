@@ -55,3 +55,10 @@ See HELP.md and LICENSE
 
 **V1.1.10**
 * Add clear playlist, add to playlist, add to playlist and play
+
+**V1.1.11**
+* Core updates / upgrade scripts
+
+**V1.1.12**
+* Add **delete** playlist ID
+* Add **volume** adjust

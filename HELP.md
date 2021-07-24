@@ -41,6 +41,8 @@ Action | Description
 **Shuffle** | Toggle playlist shuffle (random) mode
 **Repeat** | Toggle item repeat mode (cancels loop mode)
 **Clear Playlist** | Clear all items from Playlist
+**Delete ID** | Delete item with ID from Playlist
+**Volume** | Adjust VLC playback volume. Can be Absolute (0-320) or Relative (+1, -5)
 **Add Item** | Add item to Playlist
 **Add and Play** | Add item to Playlist and Play
 
