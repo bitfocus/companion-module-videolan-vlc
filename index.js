@@ -1061,6 +1061,17 @@ instance.prototype.actions = function(system) {
 				},
 			],
 		},
+		volume: {
+			label: 'Set Volume',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Value',
+					id: 'volume',
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
 		full: { label: 'Full Screen' },
 		loop: { label: 'Loop' },
 		shuffle: { label: 'Shuffle' },
@@ -1073,6 +1084,7 @@ instance.prototype.action = function(action) {
 	var cmd;
 	var opt = action.options;
 	var theClip = opt.clip;
+	var vol = opt.volume;
 
 	if (theClip) {
 		theClip = self.PlayIDs[theClip - 1];
@@ -1110,12 +1122,20 @@ instance.prototype.action = function(action) {
 			cmd = '?command=pl_empty';
 			break;
 
+		case 'deleteID':
+			cmd = '?command=pl_delete&id=' + theClip;
+			break;
+
 		case 'add':
 			cmd = '?command=in_enqueue&input=' + opt.mrl;
 			break;
 
 		case 'add_go':
 			cmd = '?command=in_play&input=' + opt.mrl;
+			break;
+
+		case 'volume':
+			cmd = '?command=volume&val=' + vol;
 			break;
 
 		case 'deleteID':
