@@ -43,6 +43,7 @@ Action | Description
 **Clear Playlist** | Clear all items from Playlist
 **Add Item** | Add item to Playlist
 **Add and Play** | Add item to Playlist and Play
+**Delete ID** | Delete a specific item from the playlist
 
 ## Variables available
 Variable | Description
