@@ -1056,6 +1056,7 @@ instance.prototype.actions = function(system) {
 					type: 'textinput',
 					label: 'Clip Number',
 					id: 'clip',
+					default: 1,
 					regex: self.REGEX_NUMBER,
 				},
 			],
@@ -1136,6 +1137,10 @@ instance.prototype.action = function(action) {
 		case 'volume':
 			cmd = '?command=volume&val=' + vol;
 			break;
+
+		case 'deleteID':
+				cmd = '?command=pl_delete&id=' + theClip;
+				break;
 
 		case 'full':
 			cmd = '?command=fullscreen';

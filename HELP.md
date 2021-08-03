@@ -45,6 +45,7 @@ Action | Description
 **Volume** | Adjust VLC playback volume. Can be Absolute (0-320) or Relative (+1, -5)
 **Add Item** | Add item to Playlist
 **Add and Play** | Add item to Playlist and Play
+**Delete ID** | Delete a specific item from the playlist
 
 ## Variables available
 Variable | Description
