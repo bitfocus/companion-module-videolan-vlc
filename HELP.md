@@ -11,7 +11,7 @@ current playlist from VLC and numbers from 1 at the top.The first item in the li
 
 VLC does not generate an error if you enter a Play ID that is not in the playlist. It will play the active item as if the Play ID was not there.
 
-Due to the nature of the feedback and play list syncronization, the module status shows ERROR if VLC is not running yet. This is normal. It is to let you know that buttons may not work as expected. The status will automatically change to OK when you start VLC.
+Due to the nature of the feedback and play list synchronization, the module status shows ERROR if VLC is not running yet. This is normal. It is to let you know that buttons may not work as expected. The status will automatically change to OK when you start VLC.
 
 ## Configuration
 If you can successfully connect to VLC with a browser, this module will work. Enter the same information from the URL.
