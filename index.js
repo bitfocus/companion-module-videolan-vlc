@@ -1050,9 +1050,9 @@ instance.prototype.actions = function (system) {
 					type: 'textinput',
 					label: 'Where',
 					id: 'where',
-					default: '1'
-				}
-			]
+					default: '1',
+				},
+			],
 		},
 		next: { label: 'Next' },
 		prev: { label: 'Previous' },
@@ -1099,6 +1099,7 @@ instance.prototype.actions = function (system) {
 					label: 'Value',
 					id: 'volume',
 					regex: self.REGEX_SIGNED_NUMBER,
+					default: 0,
 				},
 			],
 		},
