@@ -34,6 +34,7 @@ Action | Description
 **Play ID** | Play a specific item from the playlist. If ID does not exist, this command acts like a simple **Play** command.
 **Stop** | Stop playback
 **Pause / Resume** | Toggle pause. If state is 'stopped' then play current item. If no current item then play the 1st item.
+**Seek To** | Set playback to a particular position in the current item. See below for options.
 **Next** | Jump to next item
 **Previous** | Jump to previous item
 **Full Screen** | Toggle full screen
@@ -46,6 +47,17 @@ Action | Description
 **Add Item** | Add item to Playlist
 **Add and Play** | Add item to Playlist and Play
 **Delete ID** | Delete a specific item from the playlist
+
+>\
+>The **Seek To *Where*** option accepts values of the form:\
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[+ or -][{int}{H or h}:][{int}{M or m or '}:][{int}{nothing or S or s or "}] or [+ or -]{int}%\
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(values between [ ] are optional, values between {} are mandatory)\
+>&nbsp;&nbsp;&nbsp;_Examples_:\
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1000 : seek to the 1000th second\
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-10% : seek 10% backward\
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+1H:2M : seek 1 hour and 2 minutes forward
+
+>
 
 ## Variables available
 Variable | Description

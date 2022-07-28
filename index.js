@@ -1043,6 +1043,17 @@ instance.prototype.actions = function (system) {
 		},
 		stop: { label: 'Stop' },
 		pause: { label: 'Pause / Resume' },
+		seek: {
+			label: 'Seek To',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Where',
+					id: 'where',
+					default: '1',
+				},
+			],
+		},
 		next: { label: 'Next' },
 		prev: { label: 'Previous' },
 		clear: { label: 'Clear Playlist' },
@@ -1088,6 +1099,7 @@ instance.prototype.actions = function (system) {
 					label: 'Value',
 					id: 'volume',
 					regex: self.REGEX_SIGNED_NUMBER,
+					default: 0,
 				},
 			],
 		},
@@ -1127,6 +1139,10 @@ instance.prototype.action = function (action) {
 		case 'pause':
 			cmd = '?command=pl_pause'
 			break
+
+		case 'seek':
+			cmd = '?command=seek&val=' + encodeURI(opt.where)
+			break;
 
 		case 'next':
 			cmd = '?command=pl_next'
