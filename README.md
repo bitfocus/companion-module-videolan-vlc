@@ -62,3 +62,13 @@ See HELP.md and LICENSE
 **V1.1.12**
 * Add **delete** playlist ID
 * Add **volume** adjust
+
+**V1.1.13**
+* Prettier
+
+**V1.1.14**
+* Add **Seek to**
+* Added missing default
+
+**V1.1.15**
+* Added variable parsing to actions
