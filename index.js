@@ -1114,8 +1114,23 @@ instance.prototype.action = function (action) {
 	var self = this
 	var cmd
 	var opt = action.options
-	var theClip = opt.clip
-	var vol = opt.volume
+	var theClip
+	var toWhere
+	var theMrl
+	var vol
+
+	self.parseVariables(opt.clip, function(v) {
+		theClip = v
+	})
+	self.parseVariables(opt.where, function(v) {
+		toWhere = v
+	})
+	self.parseVariables(opt.volume, function(v) {
+		vol = v
+	})
+	self.parseVariables(opt.mrl, function(v) {
+		theMrl = v
+	})
 
 	if (theClip) {
 		theClip = self.PlayIDs[theClip - 1]
@@ -1141,7 +1156,7 @@ instance.prototype.action = function (action) {
 			break
 
 		case 'seek':
-			cmd = '?command=seek&val=' + encodeURI(opt.where)
+			cmd = '?command=seek&val=' + encodeURI(toWhere)
 			break;
 
 		case 'next':
@@ -1161,11 +1176,11 @@ instance.prototype.action = function (action) {
 			break
 
 		case 'add':
-			cmd = '?command=in_enqueue&input=' + opt.mrl
+			cmd = '?command=in_enqueue&input=' + theMrl
 			break
 
 		case 'add_go':
-			cmd = '?command=in_play&input=' + opt.mrl
+			cmd = '?command=in_play&input=' + theMrl
 			break
 
 		case 'volume':
