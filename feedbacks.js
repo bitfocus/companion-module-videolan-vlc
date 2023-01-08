@@ -3,22 +3,14 @@ import { combineRgb } from '@companion-module/base'
 export function GetFeedbackDefinitions(self) {
 	return {
 		c_status: {
-			type: 'advanced',
-			name: 'Color for Player State',
-			description: 'Set Button colors for Player State',
+			type: 'boolean',
+			name: 'Player State',
+			description: 'Change button style for Player State',
+			defaultStyle: {
+				bgcolor: combineRgb(128, 0, 0),
+				color: 16777215,
+			},
 			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(128, 0, 0),
-				},
 				{
 					type: 'dropdown',
 					label: 'Which Status?',
@@ -32,31 +24,18 @@ export function GetFeedbackDefinitions(self) {
 				},
 			],
 			callback: (feedback) => {
-				const options = feedback.options
-
-				if (self.PlayState == parseInt(options.playStat)) {
-					return { color: options.fg, bgcolor: options.bg }
-				}
-				return {}
+				return self.PlayState == parseInt(feedback.options.playStat)
 			},
 		},
 		c_cue: {
 			type: 'advanced',
-			name: 'Color for Item state',
-			description: 'Set Button colors for single Item State',
+			name: 'Item state',
+			description: 'Change button style for single Item State',
+			defaultStyle: {
+				bgcolor: combineRgb(0, 128, 0),
+				color: 16777215,
+			},
 			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(0, 128, 0),
-				},
 				{
 					type: 'number',
 					label: 'Clip Number',
@@ -80,106 +59,62 @@ export function GetFeedbackDefinitions(self) {
 				const options = feedback.options
 
 				if (self.PlayStatus.num == parseInt(options.clip)) {
-					if (self.PlayState == parseInt(options.playStat)) {
-						return { color: options.fg, bgcolor: options.bg }
-					}
-				} else if (0 == parseInt(options.playStat)) {
-					// not playing
-					return { color: options.fg, bgcolor: options.bg }
+					return self.PlayState == parseInt(options.playStat)
 				}
-				return {}
+
+				return 0 == parseInt(options.playStat)
 			},
 		},
 		c_loop: {
 			type: 'advanced',
-			name: 'Loop mode Color',
-			description: 'Button colors when Player in Loop mode',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(0, 128, 128),
-				},
-			],
-			callback: (feedback) => {
-				const options = feedback.options
-				return self.PlayLoop ? { color: options.fg, bgcolor: options.bg } : {}
+			name: 'Loop mode',
+			description: 'Change button style when Player in Loop mode',
+			defaultStyle: {
+				bgcolor: combineRgb(0, 128, 128),
+				color: 16777215,
+			},
+			options: [],
+			callback: () => {
+				return !!self.PlayLoop
 			},
 		},
 		c_repeat: {
 			type: 'advanced',
-			name: 'Repeat mode Color',
-			description: 'Button colors when Player in Repeat mode',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(128, 0, 128),
-				},
-			],
-			callback: (feedback) => {
-				const options = feedback.options
-				return self.PlayRepeat ? { color: options.fg, bgcolor: options.bg } : {}
+			name: 'Repeat mode',
+			description: 'Change button style when Player in Repeat mode',
+			defaultStyle: {
+				bgcolor: combineRgb(128, 0, 128),
+				color: 16777215,
+			},
+			options: [],
+			callback: () => {
+				return !!self.PlayRepeat
 			},
 		},
 		c_random: {
 			type: 'advanced',
-			name: 'Shuffle mode Color',
-			description: 'Button colors when Player in Shuffle mode',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(0, 0, 128),
-				},
-			],
-			callback: (feedback) => {
-				const options = feedback.options
-				return self.PlayRandom ? { color: options.fg, bgcolor: options.bg } : {}
+			name: 'Shuffle mode',
+			description: 'Change button style when Player in Shuffle mode',
+			defaultStyle: {
+				bgcolor: combineRgb(0, 0, 128),
+				color: 16777215,
+			},
+			options: [],
+			callback: () => {
+				return !!self.PlayRandom
 			},
 		},
 		c_full: {
 			type: 'advanced',
-			name: 'Full Screen Color',
-			description: 'Button colors when Player is Full Screen',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: '16777215',
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: combineRgb(204, 0, 128),
-				},
-			],
-			callback: (feedback) => {
-				const options = feedback.options
-				return self.PlayFull ? { color: options.fg, bgcolor: options.bg } : {}
+			name: 'Full Screen',
+			description: 'Change button style when Player is Full Screen',
+			defaultStyle: {
+				bgcolor: combineRgb(204, 0, 128),
+				color: 16777215,
+			},
+			options: [],
+			callback: () => {
+				return !!self.PlayFull
 			},
 		},
 	}

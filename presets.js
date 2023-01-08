@@ -35,9 +35,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_status',
+					style: {
+						bgcolor: combineRgb(0, 128, 0),
+						color: 16777215,
+					},
 					options: {
-						fg: '16777215',
-						bg: combineRgb(0, 128, 0),
 						playStat: '2',
 					},
 				},
@@ -69,9 +71,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_status',
+					style: {
+						bgcolor: combineRgb(128, 128, 0),
+						color: 16777215,
+					},
 					options: {
-						fg: '16777215',
-						bg: combineRgb(128, 128, 0),
 						playStat: '1',
 					},
 				},
@@ -103,9 +107,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_status',
+					style: {
+						bgcolor: combineRgb(128, 0, 0),
+						color: 16777215,
+					},
 					options: {
-						fg: '16777215',
-						bg: combineRgb(128, 0, 0),
 						playStat: '0',
 					},
 				},
@@ -135,10 +141,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_loop',
-					options: {
-						fg: '16777215',
-						bg: combineRgb(0, 128, 128),
+					style: {
+						bgcolor: combineRgb(0, 128, 128),
+						color: 16777215,
 					},
+					options: {},
 				},
 			],
 		},
@@ -166,11 +173,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_repeat',
-					options: {
-						fg: '16777215',
-						bg: combineRgb(128, 0, 128),
-						playStat: '0',
+					style: {
+						bgcolor: combineRgb(128, 0, 128),
+						color: 16777215,
 					},
+					options: {},
 				},
 			],
 		},
@@ -198,11 +205,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_random',
-					options: {
-						fg: '16777215',
-						bg: combineRgb(0, 0, 128),
-						playStat: '0',
+					style: {
+						bgcolor: combineRgb(0, 0, 128),
+						color: 16777215,
 					},
+					options: {},
 				},
 			],
 		},
@@ -230,11 +237,11 @@ export function GetPresetDefinitions() {
 			feedbacks: [
 				{
 					feedbackId: 'c_full',
-					options: {
-						fg: '16777215',
-						bg: combineRgb(204, 0, 128),
-						playStat: '0',
+					style: {
+						bgcolor: combineRgb(204, 0, 128),
+						color: 16777215,
 					},
+					options: {},
 				},
 			],
 		},
