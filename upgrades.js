@@ -6,15 +6,15 @@ export const UpgradeScripts = [
 	},
 	function (context, props) {
 		const result = {
-			config: null,
-			actions: [],
-			feedbacks: [],
+			updatedConfig: null,
+			updatedActions: [],
+			updatedFeedbacks: [],
 		}
 
 		if (props.config) {
 			if (props.config.host == undefined || props.config.host == '') {
 				props.config.host = '127.0.0.1'
-				result.config = props.config
+				result.updatedConfig = props.config
 			}
 		}
 
