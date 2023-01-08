@@ -3,9 +3,9 @@
 
 
 "@companion-module/base@~1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.0.1.tgz#cfedb35820f035ec584a2fe25c1f0255836082e9"
-  integrity sha512-4EX9b2SmWVXBB9skqdp4sCRMx1hMUHTF6sbJa4p3EgXsxELjX93Y9y5SsJiUCIKH4iHyEDrv0UOWBPXrIvDQtA==
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.0.2.tgz#8d6438f80ccfffc10a720cd95487b3945348da9b"
+  integrity sha512-Q5K4tc9QKO53YFRcAq1JncC7l0fskRBEGyAmF1mMi3g6lqnrNW+3nROzZauCO8CrQ+39BY/SurOo4EDCl4v8QA==
   dependencies:
     "@sentry/node" "^7.28.0"
     "@sentry/tracing" "^7.28.0"
