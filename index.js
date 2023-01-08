@@ -45,6 +45,13 @@ const NO_CLIP = {
 }
 
 class VlcInstance extends InstanceBase {
+	constructor(internal) {
+		super(internal)
+
+		// TODO - better define variables to avoid needing this
+		this.instanceOptions.disableVariableValidation = true
+	}
+
 	show_error(err) {
 		if (!this.disabled && this.lastStatus != InstanceStatus.UnknownError) {
 			this.updateStatus(InstanceStatus.UnknownError, err.message)
