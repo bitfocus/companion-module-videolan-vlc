@@ -1,16 +1,26 @@
+import { InstanceStatus } from '@companion-module/base'
+import got from 'got'
+
 export function GetActionDefinitions(self) {
-	const sendCommand = async (query) => {
-		// TODO
-		// 		self.client
-		// 			.get(self.baseURL + '/requests/status.json' + cmd, self.auth, function (data, response) {
-		// 				if (self.lastStatus != self.STATUS_OK) {
-		// 					self.status(self.STATUS_OK)
-		// 					self.lastStatus = self.STATUS_OK
-		// 				}
-		// 			})
-		// 			.on('error', self.show_error.bind(self))
-		// 		// force an update if command sent while VLC stopped
-		// 		self.PollCount = self.PollCount + (5 - (self.PollCount % 5))
+	const sendCommand = async (command, args) => {
+		const query = Object.entries(args || {}).map(([k, v]) => `${k}=${v}`)
+		const url = `${self.baseURL}/requests/status.json?command=${command}&${query}`
+
+		console.log('exec', url)
+
+		try {
+			await got.get(url, {
+				headers: self.headers,
+			})
+
+			self.updateStatus(InstanceStatus.Ok)
+			self.lastStatus = InstanceStatus.Ok
+		} catch (e) {
+			self.show_error(e)
+		}
+
+		// force an update if command sent while VLC stopped
+		self.PollCount = self.PollCount + (5 - (self.PollCount % 5))
 	}
 
 	const getTheClip = async (action) => {

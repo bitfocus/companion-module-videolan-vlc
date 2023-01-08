@@ -1,5 +1,6 @@
 import { InstanceBase, InstanceStatus, runEntrypoint } from '@companion-module/base'
 import * as crypto from 'crypto'
+import got from 'got'
 import { UpgradeScripts } from './upgrades.js'
 import { GetActionDefinitions } from './actions.js'
 import { ConfigFields } from './config.js'
@@ -19,32 +20,48 @@ function makeHash(list) {
 	return hasher.digest('hex')
 }
 
+function titleMunge(t) {
+	return t.length > 20 ? (t = t.slice(0, 10) + t.slice(-10)) : t
+}
+
 const PLAYSTATE_STOPPED = 0
 const PLAYSTATE_PAUSED = 1
 const PLAYSTATE_PLAYING = 2
 const PLAYSTATE_STOPPING = 3
 
+const CHARS = {
+	running: '\u23F5',
+	paused: '\u23F8',
+	stopped: '\u23F9',
+	empty: '\u00b7',
+}
+
+const NO_CLIP = {
+	title: '',
+	num: 0,
+	length: 0,
+	position: 0,
+	time: 0,
+}
+
 class VlcInstance extends InstanceBase {
 	show_error(err) {
 		if (!this.disabled && this.lastStatus != InstanceStatus.UnknownError) {
 			this.updateStatus(InstanceStatus.UnknownError, err.message)
-			this.log('error', err.message)
 			this.reset_variables()
-			this.updateStatus()
+			this.updatePlaybackStatus()
 			this.lastStatus = InstanceStatus.UnknownError
 		}
 	}
 	async configUpdated(config) {
 		// remove any 'reserved' name variables
-		var oldClear = this.config.pre_clear
-		if (oldClear) {
-			this.pre_clear = 0
-			this.clearList(oldClear)
-		}
+		this.clearUnusedReservedClipVariables(0, this.config.pre_clear || 0)
+
 		// before changing config
 		this.config = config
 		this.startup()
 	}
+
 	async init(config) {
 		this.config = config
 
@@ -56,13 +73,20 @@ class VlcInstance extends InstanceBase {
 
 		this.startup()
 	}
-	titleMunge(t) {
-		return t.length > 20 ? (t = t.slice(0, 10) + t.slice(-10)) : t
+
+	// When module gets deleted
+	async destroy() {
+		this.stopTimers()
+		this.disabled = true
 	}
+
+	// Return config fields for web config
+	getConfigFields() {
+		return ConfigFields
+	}
+
 	reset_variables() {
-		this.pre_clear = this.config.pre_clear
-		this.use_bullet = this.config.use_bullet
-		this.clearList(0)
+		this.clearUnusedReservedClipVariables(this.config.pre_clear, 0)
 
 		this.PlayIDs = []
 		this.PlayList = {}
@@ -71,7 +95,7 @@ class VlcInstance extends InstanceBase {
 		this.NowPlaying = 0
 		this.PollCount = 0
 		this.vlcVersion = 'Not Connected'
-		this.PlayStatus = this.NO_CLIP
+		this.PlayStatus = NO_CLIP
 		this.PlayLoop = false
 		this.PlayRepeat = false
 		this.PlayRandom = false
@@ -80,7 +104,8 @@ class VlcInstance extends InstanceBase {
 		this.lastStatus = -1
 		this.disabled = false
 	}
-	clear(closing) {
+
+	stopTimers() {
 		if (this.plPoll) {
 			clearInterval(this.plPoll)
 			delete this.plPoll
@@ -89,127 +114,99 @@ class VlcInstance extends InstanceBase {
 			clearInterval(this.pbPoll)
 			delete this.pbPoll
 		}
-
-		// don't recharge variables if shutting down
-		if (!closing) {
-			this.hires = this.config.hires ? true : false
-			this.baseURL = ''
-
-			this.reset_variables()
-		}
 	}
-	clear_vars() {
-		this.reset_variables()
-	}
+
 	startup() {
-		this.clear()
+		this.stopTimers()
+
+		this.reset_variables()
 
 		if (this.config.host && this.config.port) {
-			this.init_client()
-			this.plPoll = setInterval(() => {
-				this.pollPlaylist()
-			}, 500)
-			this.pbPoll = setInterval(() => {
-				this.pollPlayback()
-			}, 100)
+			this.updateStatus(InstanceStatus.Connecting)
+
+			this.baseURL = `http://${this.config.host}:${this.config.port}`
+			this.headers = {}
+
+			if (this.config.password) {
+				this.headers = {
+					Authorization: 'Basic ' + Buffer.from(`:${this.config.password}`).toString('base64'),
+				}
+			}
+
+			this.plPoll = setInterval(() => this.pollPlaylist(), 500)
+			this.pbPoll = setInterval(() => this.pollPlayback(), 100)
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
-	init_client() {
-		this.baseURL = 'http://' + this.config.host + ':' + this.config.port
-		this.auth = {}
 
-		if (this.config.password) {
-			this.auth = {
-				headers: { Authorization: 'Basic ' + Buffer.from(['', this.config.password].join(':')).toString('base64') },
-			}
-		}
+	clearUnusedReservedClipVariables(targetReservedCount, oldLength) {
+		const emptyStr = this.config.use_bullet ? CHARS.empty : ''
+		const knownClipCount = this.PlayIDs ? this.PlayIDs.length : 0
 
-		this.client = new rest_client()
-
-		this.updateStatus(InstanceStatus.Connecting)
-
-		this.client.on('error', this.show_error.bind(this))
-	}
-
-	clearList(oldLength) {
-		var pc = this.pre_clear
-		var empty = this.use_bullet ? this.MSTATUS_CHAR.empty : ''
-		var newLength = this.PlayIDs ? this.PlayIDs.length : 0
-		var emptyFrom = newLength < pc ? newLength + 1 : pc
-
-		let newValues = {}
+		const newVariableValues = {}
 
 		// add placeholder char for empty clips
-		while (pc > newLength && emptyFrom <= pc) {
-			newValues['pname_' + parseInt(emptyFrom)] = empty
-			emptyFrom++
+		for (let i = knownClipCount + 1; i <= targetReservedCount; i++) {
+			newVariableValues[`pname_${i}`] = emptyStr
 		}
 
-		// remove any variables left over
-		while (oldLength > emptyFrom) {
-			newValues['pname_' + parseInt(oldLength)] = undefined
-			oldLength--
+		// remove any previously reserved variables
+		for (let i = Math.max(targetReservedCount, knownClipCount) + 1; i < (oldLength || 0); i++) {
+			newVariableValues[`pname_${i}`] = undefined
 		}
 
-		this.setVariableValues(newValues)
+		this.setVariableValues(newVariableValues)
 	}
+
 	updatePlaylist(data) {
-		var self = this
-		var pList = JSON.parse(data.toString())
-		var newList
-		var PlayList = {}
-		var oldLength = self.PlayIDs.length
+		const pList = JSON.parse(data)
+		const newList = pList?.children?.[0]?.children
+		const newPlayList = {}
+		const oldLength = this.PlayIDs.length
 
-		if (pList.children) {
-			newList = pList.children
-		}
+		if (newList) {
+			const checkHash = makeHash(newList)
+			const newPlayIds = []
 
-		if (newList.length > 0) {
-			var nl = newList[0].children
-			var pc = makeHash(nl)
-			var pi = []
-
-			if (pc != self.PlayListCheck) {
-				var m, p
-				for (p in nl) {
-					m = new vlc_MediaInfo(nl[p])
-					PlayList[m.id] = m
-					pi.push(m.id)
+			if (checkHash != this.PlayListCheck) {
+				for (let p in newList) {
+					const itemInfo = new vlc_MediaInfo(newList[p])
+					newPlayList[itemInfo.id] = itemInfo
+					newPlayIds.push(itemInfo.id)
 				}
 
-				for (p in pi) {
-					var oName = self.PlayList[self.PlayIDs[p]] ? self.PlayList[self.PlayIDs[p]].name : ''
-					var nName = PlayList[pi[p]].name
+				for (let p in newPlayIds) {
+					const oName = this.PlayList[this.PlayIDs[p]]?.name ?? ''
+					const nName = newPlayList[newPlayIds[p]]?.name
 					if (oName != nName) {
 						// TODO - batch
-						self.setVariables({ ['pname_' + (parseInt(p) + 1)]: nName })
+						this.setVariableValues({ ['pname_' + (parseInt(p) + 1)]: nName })
 					}
 				}
-				self.PlayIDs = pi
-				self.PlayList = PlayList
-				self.PlayListCheck = pc
+				this.PlayIDs = newPlayIds
+				this.PlayList = newPlayList
+				this.PlayListCheck = checkHash
 			}
 		}
-		if (self.PlayIDs.length != oldLength) {
-			self.clearList(oldLength)
+		if (this.PlayIDs.length != oldLength) {
+			this.clearUnusedReservedClipVariables(this.config.pre_clear, oldLength)
 		}
 	}
-	updateStatus() {
-		var tenths = this.config.useTenths ? 0 : 1
-		var ps = this.PlayStatus
-		var state = this.PlayState
+	updatePlaybackStatus() {
+		let tenths = this.config.useTenths ? 0 : 1
+		let ps = this.PlayStatus
+		let state = this.PlayState
 
-		var tElapsed = ps.length * ps.position
+		let tElapsed = ps.length * ps.position
 
-		var eh = Math.floor(tElapsed / 3600)
-		var ehh = ('00' + eh).slice(-2)
-		var em = Math.floor(tElapsed / 60) % 60
-		var emm = ('00' + em).slice(-2)
-		var es = Math.floor(tElapsed % 60)
-		var ess = ('00' + es).slice(-2)
-		var eft = ''
+		let eh = Math.floor(tElapsed / 3600)
+		let ehh = ('00' + eh).slice(-2)
+		let em = Math.floor(tElapsed / 60) % 60
+		let emm = ('00' + em).slice(-2)
+		let es = Math.floor(tElapsed % 60)
+		let ess = ('00' + es).slice(-2)
+		let eft = ''
 
 		if (ehh > 0) {
 			eft = ehh + ':'
@@ -219,18 +216,18 @@ class VlcInstance extends InstanceBase {
 		}
 		eft = eft + ess
 
-		var tLeft = ps.length * (1 - ps.position)
+		let tLeft = ps.length * (1 - ps.position)
 		if (tLeft > 0) {
 			tLeft += tenths
 		}
 
-		var h = Math.floor(tLeft / 3600)
-		var hh = ('00' + h).slice(-2)
-		var m = Math.floor(tLeft / 60) % 60
-		var mm = ('00' + m).slice(-2)
-		var s = Math.floor(tLeft % 60)
-		var ss = ('00' + s).slice(-2)
-		var ft = ''
+		let h = Math.floor(tLeft / 3600)
+		let hh = ('00' + h).slice(-2)
+		let m = Math.floor(tLeft / 60) % 60
+		let mm = ('00' + m).slice(-2)
+		let s = Math.floor(tLeft % 60)
+		let ss = ('00' + s).slice(-2)
+		let ft = ''
 
 		if (hh > 0) {
 			ft = hh + ':'
@@ -241,8 +238,8 @@ class VlcInstance extends InstanceBase {
 		ft = ft + ss
 
 		if (tenths == 0) {
-			var f = Math.floor((tLeft - Math.trunc(tLeft)) * 10)
-			var ms = ('0' + f).slice(-1)
+			const f = Math.floor((tLeft - Math.trunc(tLeft)) * 10)
+			const ms = ('0' + f).slice(-1)
 			if (tLeft < 5 && tLeft != 0) {
 				ft = ft.slice(-1) + '.' + ms
 			}
@@ -253,12 +250,7 @@ class VlcInstance extends InstanceBase {
 			r_id: this.NowPlaying,
 			r_name: ps.title,
 			r_num: ps.num,
-			r_stat:
-				state == PLAYSTATE_PLAYING
-					? this.MSTATUS_CHAR.running
-					: state == PLAYSTATE_PAUSED
-					? this.MSTATUS_CHAR.paused
-					: this.MSTATUS_CHAR.stopped,
+			r_stat: state == PLAYSTATE_PLAYING ? CHARS.running : state == PLAYSTATE_PAUSED ? CHARS.paused : CHARS.stopped,
 			r_hhmmss: hh + ':' + mm + ':' + ss,
 			r_hh: hh,
 			r_mm: mm,
@@ -274,159 +266,130 @@ class VlcInstance extends InstanceBase {
 		this.checkFeedbacks()
 	}
 	updatePlayback(data) {
-		var self = this
+		let stateChanged = false
+		const pbInfo = JSON.parse(data)
 
-		var stateChanged = false
-		// hmmm. parsing the buffer directly frequently threw an error
-		// so I extracted as a string first to debug and it seems
-		// more robust this way. A glitch in JSON.parse?
-		var debuf = data.toString()
-		var pbInfo = JSON.parse(debuf)
-
-		var wasPlaying = pbStat({ currentplid: self.NowPlaying, position: self.PlayStatus.position })
-		self.vlcVersion = pbInfo.version
-
-		function pbStat(info) {
-			return info.currentplid + ':' + info.position + ':' + self.PlayState + ':' + self.PlayStatus.title
+		const pbStat = (info) => {
+			return info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
 		}
+
+		const wasPlaying = pbStat({ currentplid: this.NowPlaying, position: this.PlayStatus.position })
+		this.vlcVersion = pbInfo.version
 
 		///
 		/// pb vars and feedback here
 		///
 		stateChanged =
-			stateChanged || self.PlayState != (self.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
-		stateChanged = stateChanged || self.PlayRepeat != (self.PlayRepeat = pbInfo.repeat ? true : false)
-		stateChanged = stateChanged || self.PlayLoop != (self.PlayLoop = pbInfo.loop ? true : false)
-		stateChanged = stateChanged || self.PlayRandom != (self.PlayRandom = pbInfo.random ? true : false)
-		stateChanged = stateChanged || self.PlayFull != (self.PlayFull = pbInfo.fullscreen ? true : false)
+			stateChanged || this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
+		stateChanged = stateChanged || this.PlayRepeat != (this.PlayRepeat = !!pbInfo.repeat)
+		stateChanged = stateChanged || this.PlayLoop != (this.PlayLoop = !!pbInfo.loop)
+		stateChanged = stateChanged || this.PlayRandom != (this.PlayRandom = !!pbInfo.random)
+		stateChanged = stateChanged || this.PlayFull != (this.PlayFull = !!pbInfo.fullscreen)
+
 		if (pbInfo.currentplid < 2) {
-			self.NowPlaying = -1
-			self.PlayStatus = self.NO_CLIP
-		} else if (self.PlayIDs.length > 0) {
+			this.NowPlaying = -1
+			this.PlayStatus = NO_CLIP
+		} else if (this.PlayIDs.length > 0) {
 			if (pbInfo.currentplid) {
-				self.NowPlaying = pbInfo.currentplid
-				var t = self.PlayList[self.NowPlaying] ? self.titleMunge(self.PlayList[self.NowPlaying].name) : ''
-				self.PlayStatus = {
+				this.NowPlaying = pbInfo.currentplid
+				const t = this.PlayList[this.NowPlaying] ? titleMunge(this.PlayList[this.NowPlaying].name) : ''
+				this.PlayStatus = {
 					title: t,
-					num: 1 + self.PlayIDs.indexOf(pbInfo.currentplid.toString()),
+					num: 1 + this.PlayIDs.indexOf(pbInfo.currentplid.toString()),
 					length: pbInfo.length,
 					position: pbInfo.position,
 					time: pbInfo.time,
 				}
 			} else {
-				self.NowPlaying = -1
-				self.PlayStatus = self.NO_CLIP
+				this.NowPlaying = -1
+				this.PlayStatus = NO_CLIP
 			}
 		}
 
 		if (stateChanged) {
-			self.checkFeedbacks()
+			this.checkFeedbacks()
 		}
 
 		if (pbStat(pbInfo) != wasPlaying) {
-			self.updateStatus()
+			this.updatePlaybackStatus()
 		}
 	}
 	getRequest(url, cb) {
-		var self = this
-		var emsg = ''
-
 		// wait until prior request is finished or timed-out
 		// to reduce stacking of unanswered requests
-		if (self.PollWaiting > 0) {
+		if (this.PollWaiting > 0) {
 			return
 		}
+		this.PollWaiting++
 
-		self.PollWaiting++
-
-		self.client
-			.get(self.baseURL + url, self.auth, function (data, response) {
+		got
+			.get(this.baseURL + url, {
+				headers: this.headers,
+			})
+			.then(async (response) => {
+				const data = response.body
 				// data is a Buffer
 				if (response.statusCode == 401) {
 					// error/not found
-					if (self.lastStatus != InstanceStatus.ConnectionFailure) {
-						emsg = response.statusMessage + '.\nBad Password?'
-						self.updateStatus(InstanceStatus.ConnectionFailure, emsg)
-						self.log('error', emsg)
-						self.lastStatus = InstanceStatus.ConnectionFailure
+					if (this.lastStatus != InstanceStatus.ConnectionFailure) {
+						const emsg = response.statusMessage + '.\nBad Password?'
+						this.updateStatus(InstanceStatus.ConnectionFailure, emsg)
+						this.log('error', emsg)
+						this.lastStatus = InstanceStatus.ConnectionFailure
 					}
 				} else if (response.statusCode != 200) {
 					// page OK
-					self.show_error({ message: 'Remote says: ' + response.statusMessage + '\nIs this VLC?' })
-				} else if (data[0] != 123) {
+					this.show_error({ message: 'Remote says: ' + response.statusMessage + '\nIs this VLC?' })
+				} else if (data[0] != '{') {
 					// but is it JSON?
 					// check 1st character of data for JSON open brace '{'
 					// otherwise it is probably an HTML page from VLC
 					// apparently password is not the only issue
 					// so forward VLC response to logs
-					emsg = data.toString()
-					if (self.lastStatus != InstanceStatus.UnknownWarning) {
-						self.updateStatus(InstanceStatus.UnknownWarning, emsg)
-						self.log('error', emsg)
-						self.lastStatus = InstanceStatus.UnknownWarning
+					if (this.lastStatus != InstanceStatus.UnknownWarning) {
+						const emsg = data.toString()
+						this.updateStatus(InstanceStatus.UnknownWarning, emsg)
+						this.log('error', emsg)
+						this.lastStatus = InstanceStatus.UnknownWarning
 					}
 				} else {
-					if (self.lastStatus != InstanceStatus.Ok) {
-						self.updateStatus(InstanceStatus.Ok)
-						self.log('info', 'Connected to ' + self.config.host + ':' + self.config.port)
-						self.lastStatus = InstanceStatus.Ok
+					if (this.lastStatus != InstanceStatus.Ok) {
+						this.updateStatus(InstanceStatus.Ok)
+						this.log('info', 'Connected to ' + this.config.host + ':' + this.config.port)
+						this.lastStatus = InstanceStatus.Ok
 					}
-					cb.call(self, data)
+
+					cb(data)
 				}
-				self.PollWaiting--
+				this.PollWaiting--
 			})
-			.on('error', function (err) {
-				self.show_error(err)
-				self.PollWaiting--
+			.catch((err) => {
+				this.show_error(err)
+				this.PollWaiting--
 			})
 	}
+
 	pollPlaylist() {
 		// don't ask until connected (we have a valid status response)
 		if (this.lastStatus == InstanceStatus.Ok) {
-			this.getRequest('/requests/playlist.json', this.updatePlaylist)
+			this.getRequest('/requests/playlist.json', this.updatePlaylist.bind(this))
 		}
 	}
 	pollPlayback() {
-		var pollNow = false
-		var pollTicks = this.lastStatus == InstanceStatus.Ok ? 5 : 50
+		let pollNow = false
+		const pollTicks = this.lastStatus == InstanceStatus.Ok ? 5 : 50
 
 		// poll every tick if not stopped and hires
-		pollNow = this.PlayState != PLAYSTATE_STOPPED && this.hires
+		pollNow = this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires
 		// or poll every 500ms if connected and not playing
 		// every 5 seconds if not connected to allow for timeouts
 		pollNow = pollNow || 0 == this.PollCount % pollTicks
 		if (pollNow) {
-			this.getRequest('/requests/status.json', this.updatePlayback)
+			this.getRequest('/requests/status.json', this.updatePlayback.bind(this))
 		}
 
 		this.PollCount += 1
 	}
-
-	// When module gets deleted
-	async destroy() {
-		this.clear(true)
-		this.disabled = true
-	}
-
-	// Return config fields for web config
-	getConfigFields() {
-		return ConfigFields
-	}
-}
-
-VlcInstance.prototype.MSTATUS_CHAR = {
-	running: '\u23F5',
-	paused: '\u23F8',
-	stopped: '\u23F9',
-	empty: '\u00b7',
-}
-
-VlcInstance.prototype.NO_CLIP = {
-	title: '',
-	num: 0,
-	length: 0,
-	position: 0,
-	time: 0,
 }
 
 function vlc_MediaInfo(info) {
