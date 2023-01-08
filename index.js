@@ -1,9 +1,11 @@
-import { InstanceBase, runEntrypoint } from '@companion-module/base'
+import { InstanceBase, InstanceStatus, runEntrypoint } from '@companion-module/base'
 import * as crypto from 'crypto'
 import { UpgradeScripts } from './upgrades.js'
 import { GetActionDefinitions } from './actions.js'
 import { ConfigFields } from './config.js'
 import { GetFeedbackDefinitions } from './feedbacks.js'
+import { GetPresetDefinitions } from './presets.js'
+import { GetVariableDefinitions } from './variable.js'
 
 // hash the playlist name and position
 // to detect if we need to update our copy
@@ -17,26 +19,22 @@ function makeHash(list) {
 	return hasher.digest('hex')
 }
 
+const PLAYSTATE_STOPPED = 0
+const PLAYSTATE_PAUSED = 1
+const PLAYSTATE_PLAYING = 2
+const PLAYSTATE_STOPPING = 3
+
 class VlcInstance extends InstanceBase {
-	constructor(internal) {
-		super(internal)
-
-		this.VLC_IS_STOPPED = 0
-		this.VLC_IS_PAUSED = 1
-		this.VLC_IS_PLAYING = 2
-		this.VLC_IS_STOPPING = 3
-	}
-
 	show_error(err) {
-		if (!this.disabled && this.lastStatus != this.STATUS_ERROR) {
-			this.status(this.STATUS_ERROR, err.message)
+		if (!this.disabled && this.lastStatus != InstanceStatus.UnknownError) {
+			this.updateStatus(InstanceStatus.UnknownError, err.message)
 			this.log('error', err.message)
 			this.reset_variables()
 			this.updateStatus()
-			this.lastStatus = this.STATUS_ERROR
+			this.lastStatus = InstanceStatus.UnknownError
 		}
 	}
-	updateConfig(config) {
+	async configUpdated(config) {
 		// remove any 'reserved' name variables
 		var oldClear = this.config.pre_clear
 		if (oldClear) {
@@ -44,12 +42,17 @@ class VlcInstance extends InstanceBase {
 			this.clearList(oldClear)
 		}
 		// before changing config
-		self.config = config
+		this.config = config
 		this.startup()
 	}
-	init() {
+	async init(config) {
+		this.config = config
+
 		// export actions
 		this.setActionDefinitions(GetActionDefinitions(this))
+		this.setFeedbackDefinitions(GetFeedbackDefinitions(this))
+		this.setPresetDefinitions(GetPresetDefinitions())
+		this.setVariableDefinitions(GetVariableDefinitions())
 
 		this.startup()
 	}
@@ -57,25 +60,25 @@ class VlcInstance extends InstanceBase {
 		return t.length > 20 ? (t = t.slice(0, 10) + t.slice(-10)) : t
 	}
 	reset_variables() {
-		self.pre_clear = this.config.pre_clear
-		self.use_bullet = this.config.use_bullet
+		this.pre_clear = this.config.pre_clear
+		this.use_bullet = this.config.use_bullet
 		this.clearList(0)
 
-		self.PlayIDs = []
-		self.PlayList = {}
-		self.PlayListCheck = ''
-		self.PlayState = this.VLC_IS_STOPPED
-		self.NowPlaying = 0
-		self.PollCount = 0
-		self.vlcVersion = 'Not Connected'
-		self.PlayStatus = this.NO_CLIP
-		self.PlayLoop = false
-		self.PlayRepeat = false
-		self.PlayRandom = false
-		self.PlayFull = false
-		self.PollWaiting = 0
-		self.lastStatus = -1
-		self.disabled = false
+		this.PlayIDs = []
+		this.PlayList = {}
+		this.PlayListCheck = ''
+		this.PlayState = PLAYSTATE_STOPPED
+		this.NowPlaying = 0
+		this.PollCount = 0
+		this.vlcVersion = 'Not Connected'
+		this.PlayStatus = this.NO_CLIP
+		this.PlayLoop = false
+		this.PlayRepeat = false
+		this.PlayRandom = false
+		this.PlayFull = false
+		this.PollWaiting = 0
+		this.lastStatus = -1
+		this.disabled = false
 	}
 	clear(closing) {
 		if (this.plPoll) {
@@ -85,9 +88,6 @@ class VlcInstance extends InstanceBase {
 		if (this.pbPoll) {
 			clearInterval(this.pbPoll)
 			delete this.pbPoll
-		}
-		if (this.client) {
-			delete this.client
 		}
 
 		// don't recharge variables if shutting down
@@ -100,17 +100,12 @@ class VlcInstance extends InstanceBase {
 	}
 	clear_vars() {
 		this.reset_variables()
-		this.init_variables()
 	}
 	startup() {
 		this.clear()
-		this.status(this.STATUS_WARNING, 'Initializing')
 
 		if (this.config.host && this.config.port) {
 			this.init_client()
-			this.init_variables()
-			this.init_feedbacks()
-			this.init_presets()
 			this.plPoll = setInterval(() => {
 				this.pollPlaylist()
 			}, 500)
@@ -118,7 +113,7 @@ class VlcInstance extends InstanceBase {
 				this.pollPlayback()
 			}, 100)
 		} else {
-			this.status(this.STATUS_WARNING, 'No host configured')
+			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
 	init_client() {
@@ -133,99 +128,32 @@ class VlcInstance extends InstanceBase {
 
 		this.client = new rest_client()
 
-		this.status(this.STATUS_WARNING, 'Connecting')
+		this.updateStatus(InstanceStatus.Connecting)
 
 		this.client.on('error', this.show_error.bind(this))
 	}
-	// feedback definitions
-	init_feedbacks() {
-		self.setFeedbackDefinitions(GetFeedbackDefinitions(this))
-	}
 
-	// define instance variables
-	init_variables() {
-		var variables = [
-			{
-				label: 'VLC Version',
-				name: 'v_ver',
-			},
-			{
-				label: 'Playing Status',
-				name: 'r_stat',
-			},
-			{
-				label: 'Playing Item VLC ID',
-				name: 'r_id',
-			},
-			{
-				label: 'Playing Item Name',
-				name: 'r_name',
-			},
-			{
-				label: 'Playing Item Playlist Number',
-				name: 'r_num',
-			},
-			{
-				label: 'Playing Item Time left, variable size',
-				name: 'r_left',
-			},
-			{
-				label: 'Playing Item Time left, HH:MM:SS',
-				name: 'r_hhmmss',
-			},
-			{
-				label: 'Playing Item Time left, Hour',
-				name: 'r_hh',
-			},
-			{
-				label: 'Playing Item Time left, Minute',
-				name: 'r_mm',
-			},
-			{
-				label: 'Playing Item Time left, Second',
-				name: 'r_ss',
-			},
-			{
-				label: 'Playing Item Elapsed Time, variable size',
-				name: 'e_time',
-			},
-			{
-				label: 'Playing Item Elapsed Time, HH:MM:SS',
-				name: 'e_hhmmss',
-			},
-			{
-				label: 'Playing Item Elapsed Time, Hour',
-				name: 'e_hh',
-			},
-			{
-				label: 'Playing Item Elapsed Time, Minute',
-				name: 'e_mm',
-			},
-			{
-				label: 'Playing Item Elapsed Time, Second',
-				name: 'e_ss',
-			},
-		]
-
-		this.setVariableDefinitions(variables)
-	}
 	clearList(oldLength) {
 		var pc = this.pre_clear
 		var empty = this.use_bullet ? this.MSTATUS_CHAR.empty : ''
 		var newLength = this.PlayIDs ? this.PlayIDs.length : 0
 		var emptyFrom = newLength < pc ? newLength + 1 : pc
 
+		let newValues = {}
+
 		// add placeholder char for empty clips
 		while (pc > newLength && emptyFrom <= pc) {
-			this.setVariable('pname_' + parseInt(emptyFrom), empty)
+			newValues['pname_' + parseInt(emptyFrom)] = empty
 			emptyFrom++
 		}
 
 		// remove any variables left over
 		while (oldLength > emptyFrom) {
-			this.setVariable('pname_' + parseInt(oldLength))
+			newValues['pname_' + parseInt(oldLength)] = undefined
 			oldLength--
 		}
+
+		this.setVariableValues(newValues)
 	}
 	updatePlaylist(data) {
 		var self = this
@@ -255,7 +183,8 @@ class VlcInstance extends InstanceBase {
 					var oName = self.PlayList[self.PlayIDs[p]] ? self.PlayList[self.PlayIDs[p]].name : ''
 					var nName = PlayList[pi[p]].name
 					if (oName != nName) {
-						self.setVariable('pname_' + (parseInt(p) + 1), nName)
+						// TODO - batch
+						self.setVariables({ ['pname_' + (parseInt(p) + 1)]: nName })
 					}
 				}
 				self.PlayIDs = pi
@@ -319,28 +248,28 @@ class VlcInstance extends InstanceBase {
 			}
 		}
 
-		this.setVariable('v_ver', this.vlcVersion)
-		this.setVariable('r_id', this.NowPlaying)
-		this.setVariable('r_name', ps.title)
-		this.setVariable('r_num', ps.num)
-		this.setVariable(
-			'r_stat',
-			state == this.VLC_IS_PLAYING
-				? this.MSTATUS_CHAR.running
-				: state == this.VLC_IS_PAUSED
-				? this.MSTATUS_CHAR.paused
-				: this.MSTATUS_CHAR.stopped
-		)
-		this.setVariable('r_hhmmss', hh + ':' + mm + ':' + ss)
-		this.setVariable('r_hh', hh)
-		this.setVariable('r_mm', mm)
-		this.setVariable('r_ss', ss)
-		this.setVariable('r_left', ft)
-		this.setVariable('e_hhmmss', ehh + ':' + emm + ':' + ess)
-		this.setVariable('e_hh', ehh)
-		this.setVariable('e_mm', emm)
-		this.setVariable('e_ss', ess)
-		this.setVariable('e_time', eft)
+		this.setVariableValues({
+			v_ver: this.vlcVersion,
+			r_id: this.NowPlaying,
+			r_name: ps.title,
+			r_num: ps.num,
+			r_stat:
+				state == PLAYSTATE_PLAYING
+					? this.MSTATUS_CHAR.running
+					: state == PLAYSTATE_PAUSED
+					? this.MSTATUS_CHAR.paused
+					: this.MSTATUS_CHAR.stopped,
+			r_hhmmss: hh + ':' + mm + ':' + ss,
+			r_hh: hh,
+			r_mm: mm,
+			r_ss: ss,
+			r_left: ft,
+			e_hhmmss: ehh + ':' + emm + ':' + ess,
+			e_hh: ehh,
+			e_mm: emm,
+			e_ss: ess,
+			e_time: eft,
+		})
 
 		this.checkFeedbacks()
 	}
@@ -415,11 +344,11 @@ class VlcInstance extends InstanceBase {
 				// data is a Buffer
 				if (response.statusCode == 401) {
 					// error/not found
-					if (self.lastStatus != self.STATUS_ERROR) {
+					if (self.lastStatus != InstanceStatus.ConnectionFailure) {
 						emsg = response.statusMessage + '.\nBad Password?'
-						self.status(self.STATUS_ERROR, emsg)
+						self.updateStatus(InstanceStatus.ConnectionFailure, emsg)
 						self.log('error', emsg)
-						self.lastStatus = self.STATUS_ERROR
+						self.lastStatus = InstanceStatus.ConnectionFailure
 					}
 				} else if (response.statusCode != 200) {
 					// page OK
@@ -431,16 +360,16 @@ class VlcInstance extends InstanceBase {
 					// apparently password is not the only issue
 					// so forward VLC response to logs
 					emsg = data.toString()
-					if (self.lastStatus != self.STATUS_WARNING) {
-						self.status(self.STATUS_WARNING, emsg)
+					if (self.lastStatus != InstanceStatus.UnknownWarning) {
+						self.updateStatus(InstanceStatus.UnknownWarning, emsg)
 						self.log('error', emsg)
-						self.lastStatus = self.STATUS_WARNING
+						self.lastStatus = InstanceStatus.UnknownWarning
 					}
 				} else {
-					if (self.lastStatus != self.STATUS_OK) {
-						self.status(self.STATUS_OK)
+					if (self.lastStatus != InstanceStatus.Ok) {
+						self.updateStatus(InstanceStatus.Ok)
 						self.log('info', 'Connected to ' + self.config.host + ':' + self.config.port)
-						self.lastStatus = self.STATUS_OK
+						self.lastStatus = InstanceStatus.Ok
 					}
 					cb.call(self, data)
 				}
@@ -452,265 +381,36 @@ class VlcInstance extends InstanceBase {
 			})
 	}
 	pollPlaylist() {
-		var self = this
-
 		// don't ask until connected (we have a valid status response)
-		if (self.lastStatus == self.STATUS_OK) {
-			self.getRequest('/requests/playlist.json', self.updatePlaylist)
+		if (this.lastStatus == InstanceStatus.Ok) {
+			this.getRequest('/requests/playlist.json', this.updatePlaylist)
 		}
 	}
 	pollPlayback() {
-		var self = this
-		var data
 		var pollNow = false
-		var pollTicks = self.lastStatus == self.STATUS_OK ? 5 : 50
+		var pollTicks = this.lastStatus == InstanceStatus.Ok ? 5 : 50
 
 		// poll every tick if not stopped and hires
-		pollNow = self.PlayState != self.VLC_IS_STOPPED && self.hires
+		pollNow = this.PlayState != PLAYSTATE_STOPPED && this.hires
 		// or poll every 500ms if connected and not playing
 		// every 5 seconds if not connected to allow for timeouts
-		pollNow = pollNow || 0 == self.PollCount % pollTicks
+		pollNow = pollNow || 0 == this.PollCount % pollTicks
 		if (pollNow) {
-			self.getRequest('/requests/status.json', self.updatePlayback)
+			this.getRequest('/requests/status.json', this.updatePlayback)
 		}
 
-		self.PollCount += 1
+		this.PollCount += 1
 	}
+
 	// When module gets deleted
-	destroy() {
+	async destroy() {
 		this.clear(true)
-		self.disabled = true
-		this.status(this.STATUS_UNKNOWN, 'Disabled')
-
-		this.debug('destroy')
+		this.disabled = true
 	}
+
 	// Return config fields for web config
-	config_fields() {
+	getConfigFields() {
 		return ConfigFields
-	}
-	init_presets() {
-		var self = this
-		var presets = [
-			{
-				category: 'Player',
-				label: 'Play',
-				bank: {
-					style: 'png',
-					text: '',
-					png64: self.ICON_PLAY_INACTIVE,
-					pngalignment: 'center:center',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'play',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_status',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(0, 128, 0),
-							playStat: '2',
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Pause',
-				bank: {
-					style: 'png',
-					text: '',
-					png64: self.ICON_PAUSE_INACTIVE,
-					pngalignment: 'center:center',
-					size: '18',
-					color: self.rgb(255, 255, 255),
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'pause',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_status',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(128, 128, 0),
-							playStat: '1',
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Stop',
-				bank: {
-					style: 'png',
-					text: '',
-					png64: self.ICON_STOP_INACTIVE,
-					pngalignment: 'center:center',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'stop',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_status',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(128, 0, 0),
-							playStat: '0',
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Loop',
-				bank: {
-					style: 'png',
-					text: 'Loop Mode',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'loop',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_loop',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(0, 128, 128),
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Repeat',
-				bank: {
-					style: 'png',
-					text: 'Repeat Mode',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'repeat',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_repeat',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(128, 0, 128),
-							playStat: '0',
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Shuffle',
-				bank: {
-					style: 'png',
-					text: 'Shuffle Mode',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'shuffle',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_random',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(0, 0, 128),
-							playStat: '0',
-						},
-					},
-				],
-			},
-			{
-				category: 'Player',
-				label: 'Full Screen',
-				bank: {
-					style: 'png',
-					text: 'Full Screen Mode',
-					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'full',
-						options: {},
-					},
-				],
-				feedbacks: [
-					{
-						type: 'c_full',
-						options: {
-							fg: '16777215',
-							bg: self.rgb(204, 0, 128),
-							playStat: '0',
-						},
-					},
-				],
-			},
-		]
-
-		for (var c = 1; c <= 5; c++) {
-			presets.push({
-				category: 'Play List',
-				label: `Play #${c}`,
-				bank: {
-					style: 'png',
-					text: `Play $(vlc:pname_${c})`,
-					pngalignment: 'center:center',
-					size: 'auto',
-					color: self.rgb(164, 164, 164),
-					bgcolor: self.rgb(0, 0, 0),
-				},
-				actions: [
-					{
-						action: 'playID',
-						options: {
-							clip: c,
-						},
-					},
-				],
-			})
-		}
-
-		self.setPresetDefinitions(presets)
 	}
 }
 

@@ -15,6 +15,7 @@
 		"@companion-module/tools": "^0.5.1"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.0.1"
+		"@companion-module/base": "~1.0.1",
+		"got": "^12.5.3"
 	}
 }

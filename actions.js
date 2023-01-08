@@ -71,6 +71,7 @@ export function GetActionDefinitions(self) {
 					label: 'Where',
 					id: 'where',
 					default: '1',
+					useVariables: true,
 				},
 			],
 			callback: async (action) => {
@@ -110,6 +111,7 @@ export function GetActionDefinitions(self) {
 					label: 'Clip path/MRL',
 					id: 'mrl',
 					default: '',
+					useVariables: true,
 				},
 			],
 			callback: async (action) => {
@@ -128,6 +130,7 @@ export function GetActionDefinitions(self) {
 					label: 'Clip path/MRL',
 					id: 'mrl',
 					default: '',
+					useVariables: true,
 				},
 			],
 			callback: async (action) => {
