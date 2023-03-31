@@ -28,7 +28,7 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_cue: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Item state',
 			description: 'Change button style for single Item State',
 			defaultStyle: {
@@ -66,7 +66,7 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_loop: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Loop mode',
 			description: 'Change button style when Player in Loop mode',
 			defaultStyle: {
@@ -79,7 +79,7 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_repeat: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Repeat mode',
 			description: 'Change button style when Player in Repeat mode',
 			defaultStyle: {
@@ -92,7 +92,7 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_random: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Shuffle mode',
 			description: 'Change button style when Player in Shuffle mode',
 			defaultStyle: {
@@ -105,7 +105,7 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_full: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Full Screen',
 			description: 'Change button style when Player is Full Screen',
 			defaultStyle: {

@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 /pkg
 /pkg.tgz
+DEBUG-INSPECT
+DEBUG-PACKAGED
+DEBUG-PACKAGE
+DEBUG-INSPECTx
