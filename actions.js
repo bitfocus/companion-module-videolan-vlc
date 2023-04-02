@@ -12,15 +12,14 @@ export function GetActionDefinitions(self) {
 			await got.get(url, {
 				headers: self.headers,
 			})
-
 			self.updateStatus(InstanceStatus.Ok)
 			self.lastStatus = InstanceStatus.Ok
 		} catch (e) {
 			self.show_error(e)
 		}
-
 		// force an update if command sent while VLC stopped
-		self.PollCount = self.PollCount + (5 - (self.PollCount % 5))
+		self.PollNow = true
+
 	}
 
 	const getTheClip = async (action) => {
@@ -31,6 +30,12 @@ export function GetActionDefinitions(self) {
 
 		return self.PlayIDs[theClip - 1]
 	}
+
+	const ON_OFF_TOGGLE = [
+		{ id: '0', label: 'Off' },
+		{ id: '1', label: 'On' },
+		{ id: '2', label: 'Toggle' },
+	]
 
 	return {
 		play: {
@@ -68,9 +73,27 @@ export function GetActionDefinitions(self) {
 		},
 		pause: {
 			name: 'Pause / Resume',
-			options: [],
-			callback: async () => {
-				await sendCommand('pl_pause')
+			options: [ {
+				type: 'dropdown',
+				label: 'Which action?',
+				id: 'opt',
+				default: '2',
+				choices: [
+					{ id: '0', label: 'Pause' },
+					{ id: '1', label: 'Resume' },
+					{ id: '2', label: 'Toggle' },
+				],
+			} ],
+			callback: async (action) => {
+				if (self.PlayState==1) { // paused
+					if (action.options?.opt != 0) { // action is resume/toggle
+						await sendCommand('pl_pause')
+					}
+				} else if (self.PlayState==2) { // playing
+					if (action.options?.opt != 1) { // action is pause/toggle
+						await sendCommand('pl_pause')
+					}
+				} // else ignore
 			},
 		},
 		seek: {
@@ -190,30 +213,74 @@ export function GetActionDefinitions(self) {
 		},
 		full: {
 			name: 'Full Screen',
-			options: [],
-			callback: async () => {
-				await sendCommand('fullscreen')
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Set',
+					id: 'opt',
+					default: '1',
+					choices: ON_OFF_TOGGLE,
+				},
+			],
+			callback: async (action) => {
+				let opt = action.options.opt
+				if ('2' == opt || self.PlayFull != !!opt) {
+					await sendCommand('fullscreen')
+				}
 			},
 		},
 		loop: {
 			name: 'Loop',
-			options: [],
-			callback: async () => {
-				await sendCommand('pl_loop')
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Set',
+					id: 'opt',
+					default: '1',
+					choices: ON_OFF_TOGGLE,
+				},
+			],
+			callback: async (action) => {
+				let opt = action.options.opt
+				if ('2' == opt || self.PlayLoop != !!opt) {
+					await sendCommand('pl_loop')
+				}
 			},
 		},
 		shuffle: {
 			name: 'Shuffle',
-			options: [],
-			callback: async () => {
-				await sendCommand('pl_random')
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Set',
+					id: 'opt',
+					default: '1',
+					choices: ON_OFF_TOGGLE,
+				},
+			],
+			callback: async (action) => {
+				let opt = action.options.opt
+				if ('2' == opt || self.PlayShuffle != !!opt) {
+					await sendCommand('pl_random')
+				}
 			},
 		},
 		repeat: {
 			name: 'Repeat',
-			options: [],
-			callback: async () => {
-				await sendCommand('pl_repeat')
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Set',
+					id: 'opt',
+					default: '1',
+					choices: ON_OFF_TOGGLE,
+				},
+			],
+			callback: async (action) => {
+				let opt = action.options.opt
+				if ('2' == opt || self.PlayFull != !!opt) {
+					await sendCommand('pl_repeat')
+				}
 			},
 		},
 	}

@@ -101,12 +101,13 @@ class VlcInstance extends InstanceBase {
 		this.PlayState = PLAYSTATE_STOPPED
 		this.NowPlaying = 0
 		this.PollCount = 0
+		this.PollNow = true
 		this.vlcVersion = 'Not Connected'
 		this.PlayStatus = NO_CLIP
-		this.PlayLoop = false
-		this.PlayRepeat = false
-		this.PlayRandom = false
-		this.PlayFull = false
+		this.PlayLoop = undefined
+		this.PlayRepeat = undefined
+		this.PlayShuffle = undefined
+		this.PlayFull = undefined
 		this.PollWaiting = 0
 		this.lastStatus = -1
 		this.disabled = false
@@ -141,7 +142,7 @@ class VlcInstance extends InstanceBase {
 			}
 
 			this.plPoll = setInterval(() => this.pollPlaylist(), 500)
-			this.pbPoll = setInterval(() => this.pollPlayback(), 100)
+			this.pbPoll = setInterval(() => this.pollPlayback(), 10)
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
@@ -183,14 +184,16 @@ class VlcInstance extends InstanceBase {
 					newPlayIds.push(itemInfo.id)
 				}
 
+				let q_vars = {}
+
 				for (let p in newPlayIds) {
 					const oName = this.PlayList[this.PlayIDs[p]]?.name ?? ''
 					const nName = newPlayList[newPlayIds[p]]?.name
 					if (oName != nName) {
-						// TODO - batch
-						this.setVariableValues({ ['pname_' + (parseInt(p) + 1)]: nName })
+						q_vars['pname_' + (parseInt(p) + 1)] = nName
 					}
 				}
+				this.setVariableValues(q_vars)
 				this.PlayIDs = newPlayIds
 				this.PlayList = newPlayList
 				this.PlayListCheck = checkHash
@@ -290,7 +293,7 @@ class VlcInstance extends InstanceBase {
 			stateChanged || this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
 		stateChanged = stateChanged || this.PlayRepeat != (this.PlayRepeat = !!pbInfo.repeat)
 		stateChanged = stateChanged || this.PlayLoop != (this.PlayLoop = !!pbInfo.loop)
-		stateChanged = stateChanged || this.PlayRandom != (this.PlayRandom = !!pbInfo.random)
+		stateChanged = stateChanged || this.PlayShuffle != (this.PlayShuffle = !!pbInfo.random)
 		stateChanged = stateChanged || this.PlayFull != (this.PlayFull = !!pbInfo.fullscreen)
 
 		if (pbInfo.currentplid < 2) {
@@ -314,7 +317,7 @@ class VlcInstance extends InstanceBase {
 		}
 
 		if (stateChanged) {
-			this.checkFeedbacks()
+			this.checkFeedbacks('c_status','c_cue','c_loop','c_repeat','c_shuffle','c_full')
 		}
 
 		if (pbStat(pbInfo) != wasPlaying) {
@@ -383,11 +386,11 @@ class VlcInstance extends InstanceBase {
 		}
 	}
 	pollPlayback() {
-		let pollNow = false
-		const pollTicks = this.lastStatus == InstanceStatus.Ok ? 5 : 50
+		let pollNow = this.PollNow
+		const pollTicks = this.lastStatus == InstanceStatus.Ok ? 50 : 500
 
 		// poll every tick if not stopped and hires
-		pollNow = this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires
+		pollNow = pollNow || this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires
 		// or poll every 500ms if connected and not playing
 		// every 5 seconds if not connected to allow for timeouts
 		pollNow = pollNow || 0 == this.PollCount % pollTicks
@@ -395,6 +398,7 @@ class VlcInstance extends InstanceBase {
 			this.getRequest('/requests/status.json', this.updatePlayback.bind(this))
 		}
 
+		this.PollNow = false
 		this.PollCount += 1
 	}
 }
