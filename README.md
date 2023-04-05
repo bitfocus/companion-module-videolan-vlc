@@ -76,6 +76,8 @@ See HELP.md and LICENSE
 **V2.0.1**
 * Initial V3 refactor
 
-**V2.1.0**
+**V2.0.2**
 * fix missing feedbacks
-
+*
+**V2.1.0**
+* Update: Add several Toggle actions, improve feedbacks
