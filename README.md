@@ -76,6 +76,6 @@ See HELP.md and LICENSE
 **V2.0.1**
 * Initial V3 refactor
 
-**V2.0.2**
+**V2.1.0**
 * fix missing feedbacks
 
