@@ -72,3 +72,10 @@ See HELP.md and LICENSE
 
 **V1.1.15**
 * Added variable parsing to actions
+
+**V2.0.1**
+* Initial V3 refactor
+
+**V2.1.0**
+* fix missing feedbacks
+

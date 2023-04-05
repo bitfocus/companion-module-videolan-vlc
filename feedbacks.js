@@ -1,6 +1,11 @@
 import { combineRgb } from '@companion-module/base'
 
 export function GetFeedbackDefinitions(self) {
+	const ON_OFF = [
+		{id: true, label: 'On'},
+		{id: false, label: 'Off'},
+	]
+
 	return {
 		c_status: {
 			type: 'boolean',
@@ -23,12 +28,12 @@ export function GetFeedbackDefinitions(self) {
 					],
 				},
 			],
-			callback: (feedback) => {
-				return self.PlayState == parseInt(feedback.options.playStat)
+			callback: (fb) => {
+				return self.PlayState == parseInt(fb.options.playStat)
 			},
 		},
 		c_cue: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Item state',
 			description: 'Change button style for single Item State',
 			defaultStyle: {
@@ -55,8 +60,8 @@ export function GetFeedbackDefinitions(self) {
 					],
 				},
 			],
-			callback: (feedback) => {
-				const options = feedback.options
+			callback: (fb) => {
+				const options = fb.options
 
 				if (self.PlayStatus.num == parseInt(options.clip)) {
 					return self.PlayState == parseInt(options.playStat)
@@ -66,55 +71,87 @@ export function GetFeedbackDefinitions(self) {
 			},
 		},
 		c_loop: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Loop mode',
-			description: 'Change button style when Player in Loop mode',
+			description: 'Change button style when Player Loop mode is',
 			defaultStyle: {
 				bgcolor: combineRgb(0, 128, 128),
 				color: 16777215,
 			},
-			options: [],
-			callback: () => {
-				return !!self.PlayLoop
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Status',
+					id: 'opt',
+					default: true,
+					choices: ON_OFF,
+				}
+			],
+			callback: (fb) => {
+				return !!self.PlayLoop == fb.options.opt
 			},
 		},
 		c_repeat: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Repeat mode',
-			description: 'Change button style when Player in Repeat mode',
+			description: 'Change button style when Player Repeat mode is',
 			defaultStyle: {
 				bgcolor: combineRgb(128, 0, 128),
 				color: 16777215,
 			},
-			options: [],
-			callback: () => {
-				return !!self.PlayRepeat
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Status',
+					id: 'opt',
+					default: true,
+					choices: ON_OFF,
+				}
+			],
+			callback: (fb) => {
+				return !!self.PlayRepeat == fb.options.opt
 			},
 		},
-		c_random: {
-			type: 'advanced',
+		c_shuffle: {
+			type: 'boolean',
 			name: 'Shuffle mode',
-			description: 'Change button style when Player in Shuffle mode',
+			description: 'Change button style when Player in Shuffle is',
 			defaultStyle: {
 				bgcolor: combineRgb(0, 0, 128),
 				color: 16777215,
 			},
-			options: [],
-			callback: () => {
-				return !!self.PlayRandom
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Status',
+					id: 'opt',
+					default: true,
+					choices: ON_OFF,
+				}
+			],
+			callback: (fb) => {
+				return !!self.PlayShuffle == fb.options.opt
 			},
 		},
 		c_full: {
-			type: 'advanced',
+			type: 'boolean',
 			name: 'Full Screen',
-			description: 'Change button style when Player is Full Screen',
+			description: 'Change button style when Player is Full Screen is',
 			defaultStyle: {
 				bgcolor: combineRgb(204, 0, 128),
 				color: 16777215,
 			},
-			options: [],
-			callback: () => {
-				return !!self.PlayFull
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Status',
+					id: 'opt',
+					default: true,
+					choices: ON_OFF,
+				}
+			],
+			callback: (fb) => {
+				return !!self.PlayFull == fb.options.opt
 			},
 		},
 	}
