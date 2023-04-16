@@ -103,6 +103,8 @@ class VlcInstance extends InstanceBase {
 		this.PollCount = 0
 		this.PollNow = true
 		this.vlcVersion = 'Not Connected'
+		this.vlcVolume = -1
+		this.vlcItems = 0
 		this.PlayStatus = NO_CLIP
 		this.PlayLoop = undefined
 		this.PlayRepeat = undefined
@@ -198,11 +200,14 @@ class VlcInstance extends InstanceBase {
 				this.PlayList = newPlayList
 				this.PlayListCheck = checkHash
 			}
+			this.vlcItems = this.PlayIDs.length
 		}
 		if (this.PlayIDs.length != oldLength) {
+			this.setVariableValues({ v_num: this.vlcItems })
 			this.clearUnusedReservedClipVariables(this.config.pre_clear, oldLength)
 		}
 	}
+
 	updatePlaybackStatus() {
 		let tenths = this.config.useTenths ? 0 : 1
 		let ps = this.PlayStatus
@@ -257,6 +262,7 @@ class VlcInstance extends InstanceBase {
 
 		this.setVariableValues({
 			v_ver: this.vlcVersion,
+			v_num: this.vlcItems,
 			r_id: this.NowPlaying,
 			r_name: ps.title,
 			r_num: ps.num,
@@ -285,7 +291,13 @@ class VlcInstance extends InstanceBase {
 
 		const wasPlaying = pbStat({ currentplid: this.NowPlaying, position: this.PlayStatus.position })
 		this.vlcVersion = pbInfo.version
-
+		if (this.vlcVolume != pbInfo.volume) {
+			this.vlcVolume = pbInfo.volume
+			this.setVariableValues({
+				vol: this.vlcVolume,
+				volp: Math.round(((this.vlcVolume * 100.0) + Number.EPSILON) / 256.0),
+			})
+		}
 		///
 		/// pb vars and feedback here
 		///
@@ -317,13 +329,14 @@ class VlcInstance extends InstanceBase {
 		}
 
 		if (stateChanged) {
-			this.checkFeedbacks('c_status','c_cue','c_loop','c_repeat','c_shuffle','c_full')
+			this.checkFeedbacks('c_status', 'c_cue', 'c_loop', 'c_repeat', 'c_shuffle', 'c_full')
 		}
 
 		if (pbStat(pbInfo) != wasPlaying) {
 			this.updatePlaybackStatus()
 		}
 	}
+
 	getRequest(url, cb) {
 		// wait until prior request is finished or timed-out
 		// to reduce stacking of unanswered requests
@@ -390,7 +403,7 @@ class VlcInstance extends InstanceBase {
 		const pollTicks = this.lastStatus == InstanceStatus.Ok ? 50 : 500
 
 		// poll every tick if not stopped and hires
-		pollNow = pollNow || this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires
+		pollNow = pollNow || (this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires)
 		// or poll every 500ms if connected and not playing
 		// every 5 seconds if not connected to allow for timeouts
 		pollNow = pollNow || 0 == this.PollCount % pollTicks
