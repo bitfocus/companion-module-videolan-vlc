@@ -60,5 +60,17 @@ export function GetVariableDefinitions() {
 			name: 'Playing Item Elapsed Time, Second',
 			variableId: 'e_ss',
 		},
+		{
+			name: 'Number of playlist items loaded',
+			variableId: 'v_num',
+		},
+		{
+			name: 'Current playback volume',
+			variableId: 'vol',
+		},
+		{
+			name: 'Current playback volume %',
+			variableId: 'volp',
+		},
 	]
 }
