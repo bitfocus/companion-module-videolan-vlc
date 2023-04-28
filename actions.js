@@ -197,9 +197,10 @@ export function GetActionDefinitions(self) {
 			name: 'Set Volume',
 			options: [
 				{
-					type: 'number',
+					type: 'textinput',
 					label: 'Value',
 					id: 'volume',
+					useVariables: true,
 					default: 0,
 				},
 			],
