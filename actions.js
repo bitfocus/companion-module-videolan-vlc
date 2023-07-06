@@ -19,7 +19,6 @@ export function GetActionDefinitions(self) {
 		}
 		// force an update if command sent while VLC stopped
 		self.PollNow = true
-
 	}
 
 	const getTheClip = async (action) => {
@@ -73,24 +72,30 @@ export function GetActionDefinitions(self) {
 		},
 		pause: {
 			name: 'Pause / Resume',
-			options: [ {
-				type: 'dropdown',
-				label: 'Which action?',
-				id: 'opt',
-				default: '2',
-				choices: [
-					{ id: '0', label: 'Pause' },
-					{ id: '1', label: 'Resume' },
-					{ id: '2', label: 'Toggle' },
-				],
-			} ],
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Which action?',
+					id: 'opt',
+					default: '2',
+					choices: [
+						{ id: '0', label: 'Pause' },
+						{ id: '1', label: 'Resume' },
+						{ id: '2', label: 'Toggle' },
+					],
+				},
+			],
 			callback: async (action) => {
-				if (self.PlayState==1) { // paused
-					if (action.options?.opt != 0) { // action is resume/toggle
+				if (self.PlayState == 1) {
+					// paused
+					if (action.options?.opt != 0) {
+						// action is resume/toggle
 						await sendCommand('pl_pause')
 					}
-				} else if (self.PlayState==2) { // playing
-					if (action.options?.opt != 1) { // action is pause/toggle
+				} else if (self.PlayState == 2) {
+					// playing
+					if (action.options?.opt != 1) {
+						// action is pause/toggle
 						await sendCommand('pl_pause')
 					}
 				} // else ignore
@@ -209,6 +214,35 @@ export function GetActionDefinitions(self) {
 
 				await sendCommand('volume', {
 					val: vol,
+				})
+			},
+		},
+		rate: {
+			name: 'Set Playback Rate',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Value',
+					id: 'rate',
+					useVariables: true,
+					default: 100,
+				},
+			],
+			callback: async (action) => {
+				let rate = await self.parseVariablesInString(action.options.rate)
+				const adj = ['+', '-'].includes(rate.slice(0, 1)) ? rate.slice(0, 1) : ''
+
+				if (adj == '') {
+					rate = rate / 100
+				} else {
+					rate = self.vlcRate + parseInt(rate) / 100
+					if (Math.abs(rate - 1) < 0.001) {
+						rate = 1
+					}
+				}
+
+				await sendCommand('rate', {
+					val: rate,
 				})
 			},
 		},
