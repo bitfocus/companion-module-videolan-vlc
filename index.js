@@ -298,6 +298,13 @@ class VlcInstance extends InstanceBase {
 				volp: Math.round(((this.vlcVolume * 100.0) + Number.EPSILON) / 256.0),
 			})
 		}
+		if (this.vlcRate != pbInfo.rate) {
+			this.vlcRate = pbInfo.rate
+			this.setVariableValues({
+				rate: Math.round((this.vlcRate * 100))
+			})
+
+		}
 		///
 		/// pb vars and feedback here
 		///

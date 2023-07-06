@@ -84,3 +84,9 @@ See HELP.md and LICENSE
 
 **V2.2.0**
 * Add volume and playlist count variables
+
+**V2.2.1**
+* Don't strip +/- from volume adjustment
+
+**V2.3.0**
+* Add actions to adjust playback speed/rate

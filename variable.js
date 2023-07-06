@@ -72,5 +72,9 @@ export function GetVariableDefinitions() {
 			name: 'Current playback volume %',
 			variableId: 'volp',
 		},
+		{
+			name: 'Current playback speed %',
+			variableId: 'rate',
+		}
 	]
 }
