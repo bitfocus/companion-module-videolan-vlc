@@ -66,8 +66,6 @@ export function GetFeedbackDefinitions(self) {
 				if (self.PlayStatus.num == parseInt(options.clip)) {
 					return self.PlayState == parseInt(options.playStat)
 				}
-
-				return 0 == parseInt(options.playStat)
 			},
 		},
 		c_loop: {
