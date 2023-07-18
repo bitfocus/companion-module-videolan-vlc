@@ -21,8 +21,8 @@ export function GetActionDefinitions(self) {
 		self.PollNow = true
 	}
 
-	const getTheClip = async (action) => {
-		const theClip = await self.parseVariablesInString(action.options.clip)
+	const getTheClip = async (action, context) => {
+		const theClip = await context.parseVariablesInString(action.options.clip)
 		if (isNaN(theClip)) {
 			throw new Error('ClipId is not a number')
 		}
@@ -48,19 +48,21 @@ export function GetActionDefinitions(self) {
 			name: 'Play ID',
 			options: [
 				{
-					type: 'number',
+					type: 'textinput',
 					label: 'Clip Number',
 					id: 'clip',
 					default: 1,
-					min: 0,
+					useVariables: true,
 				},
 			],
-			callback: async (action) => {
-				const theClip = await getTheClip(action)
+			callback: async (action, context) => {
+				try {
+					const theClip = await getTheClip(action, context)
 
-				await sendCommand('pl_play', {
-					id: theClip,
-				})
+					await sendCommand('pl_play', {
+						id: theClip,
+					})
+				} catch {}
 			},
 		},
 		stop: {
@@ -112,8 +114,8 @@ export function GetActionDefinitions(self) {
 					useVariables: true,
 				},
 			],
-			callback: async (action) => {
-				const toWhere = await self.parseVariablesInString(action.options.where)
+			callback: async (action, context) => {
+				const toWhere = await context.parseVariablesInString(action.options.where)
 
 				await sendCommand('seek', {
 					val: encodeURI(toWhere),
@@ -152,8 +154,8 @@ export function GetActionDefinitions(self) {
 					useVariables: true,
 				},
 			],
-			callback: async (action) => {
-				const theMrl = await self.parseVariablesInString(action.options.mrl)
+			callback: async (action, context) => {
+				const theMrl = await context.parseVariablesInString(action.options.mrl)
 
 				await sendCommand('in_enqueue', {
 					input: theMrl,
@@ -171,8 +173,8 @@ export function GetActionDefinitions(self) {
 					useVariables: true,
 				},
 			],
-			callback: async (action) => {
-				const theMrl = await self.parseVariablesInString(action.options.mrl)
+			callback: async (action, context) => {
+				const theMrl = await context.parseVariablesInString(action.options.mrl)
 
 				await sendCommand('in_play', {
 					input: theMrl,
@@ -190,8 +192,8 @@ export function GetActionDefinitions(self) {
 					min: 0,
 				},
 			],
-			callback: async (action) => {
-				const theClip = await getTheClip(action)
+			callback: async (action, context) => {
+				const theClip = await getTheClip(action, context)
 
 				await sendCommand('pl_delete', {
 					id: theClip,
@@ -209,8 +211,8 @@ export function GetActionDefinitions(self) {
 					default: 0,
 				},
 			],
-			callback: async (action) => {
-				const vol = await self.parseVariablesInString(action.options.volume)
+			callback: async (action, context) => {
+				const vol = await context.parseVariablesInString(action.options.volume)
 
 				await sendCommand('volume', {
 					val: vol,
@@ -228,8 +230,8 @@ export function GetActionDefinitions(self) {
 					default: 100,
 				},
 			],
-			callback: async (action) => {
-				let rate = await self.parseVariablesInString(action.options.rate)
+			callback: async (action, context) => {
+				let rate = await context.parseVariablesInString(action.options.rate)
 				const adj = ['+', '-'].includes(rate.slice(0, 1)) ? rate.slice(0, 1) : ''
 
 				if (adj == '') {
