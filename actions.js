@@ -87,7 +87,7 @@ export function GetActionDefinitions(self) {
 					],
 				},
 			],
-			callback: async (action) => {
+			callback: async (action, context) => {
 				if (self.PlayState == 1) {
 					// paused
 					if (action.options?.opt != 0) {
