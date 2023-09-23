@@ -3,6 +3,12 @@ import { CreateConvertToBooleanFeedbackUpgradeScript } from '@companion-module/b
 export const UpgradeScripts = [
 	function () {
 		// no longer necessary - has to live on though
+		const result = {
+			updatedConfig: null,
+			updatedActions: [],
+			updatedFeedbacks: [],
+		}
+		return result
 	},
 	function (context, props) {
 		const result = {
