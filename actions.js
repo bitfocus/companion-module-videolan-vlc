@@ -278,8 +278,8 @@ export function GetActionDefinitions(self) {
 				},
 			],
 			callback: async (action) => {
-				let opt = action.options.opt
-				if ('2' == opt || self.PlayLoop != !!opt) {
+				let opt = parseInt(action.options.opt)
+				if (2 === opt || self.PlayLoop != !!opt) {
 					await sendCommand('pl_loop')
 				}
 			},
@@ -314,8 +314,8 @@ export function GetActionDefinitions(self) {
 				},
 			],
 			callback: async (action) => {
-				let opt = action.options.opt
-				if ('2' == opt || self.PlayFull != !!opt) {
+				let opt = parseInt(action.options.opt)
+				if (2 === opt || self.PlayRepeat != !!opt) {
 					await sendCommand('pl_repeat')
 				}
 			},
