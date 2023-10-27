@@ -260,8 +260,8 @@ export function GetActionDefinitions(self) {
 				},
 			],
 			callback: async (action) => {
-				let opt = action.options.opt
-				if ('2' == opt || self.PlayFull != !!opt) {
+				let opt = parseInt(action.options.opt)
+				if (2 === opt || self.PlayFull != !!opt) {
 					await sendCommand('fullscreen')
 				}
 			},
@@ -296,8 +296,8 @@ export function GetActionDefinitions(self) {
 				},
 			],
 			callback: async (action) => {
-				let opt = action.options.opt
-				if ('2' == opt || self.PlayShuffle != !!opt) {
+				let opt = parseInt(action.options.opt)
+				if (2 === opt || self.PlayShuffle != !!opt) {
 					await sendCommand('pl_random')
 				}
 			},
