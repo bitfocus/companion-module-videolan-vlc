@@ -62,7 +62,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'pause',
-							options: {},
+							options: { opt: 2 },
 						},
 					],
 					up: [],
@@ -75,9 +75,7 @@ export function GetPresetDefinitions() {
 						bgcolor: combineRgb(128, 128, 0),
 						color: 16777215,
 					},
-					options: {
-						playStat: '1',
-					},
+					options: { playStat: '1' },
 				},
 			],
 		},
@@ -132,7 +130,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'loop',
-							options: {},
+							options: { opt: 2 },
 						},
 					],
 					up: [],
@@ -145,7 +143,7 @@ export function GetPresetDefinitions() {
 						bgcolor: combineRgb(0, 128, 128),
 						color: 16777215,
 					},
-					options: {},
+					options: { opt: true },
 				},
 			],
 		},
@@ -164,7 +162,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'repeat',
-							options: {},
+							options: { opt: 2 },
 						},
 					],
 					up: [],
@@ -177,7 +175,7 @@ export function GetPresetDefinitions() {
 						bgcolor: combineRgb(128, 0, 128),
 						color: 16777215,
 					},
-					options: {},
+					options: { opt: true },
 				},
 			],
 		},
@@ -196,7 +194,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'shuffle',
-							options: {},
+							options: { opt: 2 },
 						},
 					],
 					up: [],
@@ -209,7 +207,7 @@ export function GetPresetDefinitions() {
 						bgcolor: combineRgb(0, 0, 128),
 						color: 16777215,
 					},
-					options: {},
+					options: { opt: true },
 				},
 			],
 		},
@@ -228,7 +226,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'full',
-							options: {},
+							options: { opt: 2 },
 						},
 					],
 					up: [],
@@ -241,7 +239,7 @@ export function GetPresetDefinitions() {
 						bgcolor: combineRgb(204, 0, 128),
 						color: 16777215,
 					},
-					options: {},
+					options: { opt: true },
 				},
 			],
 		},
@@ -264,9 +262,7 @@ export function GetPresetDefinitions() {
 					down: [
 						{
 							actionId: 'playID',
-							options: {
-								clip: c,
-							},
+							options: { clip: c },
 						},
 					],
 					up: [],
