@@ -202,7 +202,7 @@ export function GetPresetDefinitions() {
 			],
 			feedbacks: [
 				{
-					feedbackId: 'c_random',
+					feedbackId: 'c_shuffle',
 					style: {
 						bgcolor: combineRgb(0, 0, 128),
 						color: 16777215,
