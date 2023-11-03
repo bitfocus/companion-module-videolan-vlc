@@ -1,4 +1,6 @@
 import { InstanceStatus } from '@companion-module/base'
+import * as CHOICES from './choices.js'
+
 import got from 'got'
 
 export function GetActionDefinitions(self) {
@@ -29,12 +31,6 @@ export function GetActionDefinitions(self) {
 
 		return self.PlayIDs[theClip - 1]
 	}
-
-	const ON_OFF_TOGGLE = [
-		{ id: '0', label: 'Off' },
-		{ id: '1', label: 'On' },
-		{ id: '2', label: 'Toggle' },
-	]
 
 	return {
 		play: {
@@ -88,19 +84,10 @@ export function GetActionDefinitions(self) {
 				},
 			],
 			callback: async (action, context) => {
-				if (self.PlayState == 1) {
-					// paused
-					if (action.options?.opt != 0) {
-						// action is resume/toggle
-						await sendCommand('pl_pause')
-					}
-				} else if (self.PlayState == 2) {
-					// playing
-					if (action.options?.opt != 1) {
-						// action is pause/toggle
-						await sendCommand('pl_pause')
-					}
-				} // else ignore
+				const ao = parseInt(action.options.opt)
+				if (ao == 2 || ao != self.PlayState - 1) {
+					await sendCommand('pl_pause')
+				}
 			},
 		},
 		seek: {
@@ -256,7 +243,7 @@ export function GetActionDefinitions(self) {
 					label: 'Set',
 					id: 'opt',
 					default: '1',
-					choices: ON_OFF_TOGGLE,
+					choices: CHOICES.ON_OFF_TOGGLE,
 				},
 			],
 			callback: async (action) => {
@@ -274,7 +261,7 @@ export function GetActionDefinitions(self) {
 					label: 'Set',
 					id: 'opt',
 					default: '1',
-					choices: ON_OFF_TOGGLE,
+					choices: CHOICES.ON_OFF_TOGGLE,
 				},
 			],
 			callback: async (action) => {
@@ -292,7 +279,7 @@ export function GetActionDefinitions(self) {
 					label: 'Set',
 					id: 'opt',
 					default: '1',
-					choices: ON_OFF_TOGGLE,
+					choices: CHOICES.ON_OFF_TOGGLE,
 				},
 			],
 			callback: async (action) => {
@@ -310,7 +297,7 @@ export function GetActionDefinitions(self) {
 					label: 'Set',
 					id: 'opt',
 					default: '1',
-					choices: ON_OFF_TOGGLE,
+					choices: CHOICES.ON_OFF_TOGGLE,
 				},
 			],
 			callback: async (action) => {

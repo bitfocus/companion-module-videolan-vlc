@@ -7,6 +7,7 @@ import { ConfigFields } from './config.js'
 import { GetFeedbackDefinitions } from './feedbacks.js'
 import { GetPresetDefinitions } from './presets.js'
 import { GetVariableDefinitions } from './variable.js'
+import * as CHOICES from './choices.js'
 
 // hash the playlist name and position
 // to detect if we need to update our copy
@@ -20,14 +21,13 @@ function makeHash(list) {
 	return hasher.digest('hex')
 }
 
+const PLAYSTATE = CHOICES.PLAYSTATE
+
+const PL_POLL = 30		// 30 x 0.5 secs
+
 function titleMunge(t) {
 	return t.length > 20 ? (t = t.slice(0, 10) + t.slice(-10)) : t
 }
-
-const PLAYSTATE_STOPPED = 0
-const PLAYSTATE_PAUSED = 1
-const PLAYSTATE_PLAYING = 2
-const PLAYSTATE_STOPPING = 3
 
 const CHARS = {
 	running: '\u23F5',
@@ -50,6 +50,7 @@ class VlcInstance extends InstanceBase {
 
 		// TODO - better define variables to avoid needing this
 		this.instanceOptions.disableVariableValidation = true
+		this.decodingPlaylist = false
 	}
 
 	show_error(err) {
@@ -98,7 +99,7 @@ class VlcInstance extends InstanceBase {
 		this.PlayIDs = []
 		this.PlayList = {}
 		this.PlayListCheck = ''
-		this.PlayState = PLAYSTATE_STOPPED
+		this.PlayState = CHOICES.PLAYSTATE.STOPPED
 		this.NowPlaying = 0
 		this.PollCount = 0
 		this.PollNow = true
@@ -180,8 +181,10 @@ class VlcInstance extends InstanceBase {
 			const newPlayIds = []
 
 			if (checkHash != this.PlayListCheck) {
-				for (let p in newList) {
-					const itemInfo = new vlc_MediaInfo(newList[p])
+				this.log('info', `Decoding ${newList.length}`)
+				this.decodingPlaylist = true
+				for (const p of newList) {
+					const itemInfo = new vlc_MediaInfo(p)
 					newPlayList[itemInfo.id] = itemInfo
 					newPlayIds.push(itemInfo.id)
 				}
@@ -199,6 +202,8 @@ class VlcInstance extends InstanceBase {
 				this.PlayIDs = newPlayIds
 				this.PlayList = newPlayList
 				this.PlayListCheck = checkHash
+				this.decodingPlaylist = false
+				this.log('info', `Done`)
 			}
 			this.vlcItems = this.PlayIDs.length
 		}
@@ -266,7 +271,12 @@ class VlcInstance extends InstanceBase {
 			r_id: this.NowPlaying,
 			r_name: ps.title,
 			r_num: ps.num,
-			r_stat: state == PLAYSTATE_PLAYING ? CHARS.running : state == PLAYSTATE_PAUSED ? CHARS.paused : CHARS.stopped,
+			r_stat:
+				state == PLAYSTATE.PLAYING
+					? CHARS.running
+					: state == PLAYSTATE.PAUSED
+					? CHARS.paused
+					: CHARS.stopped,
 			r_hhmmss: hh + ':' + mm + ':' + ss,
 			r_hh: hh,
 			r_mm: mm,
@@ -286,7 +296,9 @@ class VlcInstance extends InstanceBase {
 		const pbInfo = JSON.parse(data)
 
 		const pbStat = (info) => {
-			return info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
+			return (
+				info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
+			)
 		}
 
 		const wasPlaying = pbStat({ currentplid: this.NowPlaying, position: this.PlayStatus.position })
@@ -295,21 +307,21 @@ class VlcInstance extends InstanceBase {
 			this.vlcVolume = pbInfo.volume
 			this.setVariableValues({
 				vol: this.vlcVolume,
-				volp: Math.round(((this.vlcVolume * 100.0) + Number.EPSILON) / 256.0),
+				volp: Math.round((this.vlcVolume * 100.0 + Number.EPSILON) / 256.0),
 			})
 		}
 		if (this.vlcRate != pbInfo.rate) {
 			this.vlcRate = pbInfo.rate
 			this.setVariableValues({
-				rate: Math.round((this.vlcRate * 100))
+				rate: Math.round(this.vlcRate * 100),
 			})
-
 		}
 		///
 		/// pb vars and feedback here
 		///
 		stateChanged =
-			stateChanged || this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
+			stateChanged ||
+			this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
 		stateChanged = stateChanged || this.PlayRepeat != (this.PlayRepeat = !!pbInfo.repeat)
 		stateChanged = stateChanged || this.PlayLoop != (this.PlayLoop = !!pbInfo.loop)
 		stateChanged = stateChanged || this.PlayShuffle != (this.PlayShuffle = !!pbInfo.random)
@@ -321,7 +333,9 @@ class VlcInstance extends InstanceBase {
 		} else if (this.PlayIDs.length > 0) {
 			if (pbInfo.currentplid) {
 				this.NowPlaying = pbInfo.currentplid
-				const t = this.PlayList[this.NowPlaying] ? titleMunge(this.PlayList[this.NowPlaying].name) : ''
+				const t = this.PlayList[this.NowPlaying]
+					? titleMunge(this.PlayList[this.NowPlaying].name)
+					: ''
 				this.PlayStatus = {
 					title: t,
 					num: 1 + this.PlayIDs.indexOf(pbInfo.currentplid.toString()),
@@ -344,7 +358,7 @@ class VlcInstance extends InstanceBase {
 		}
 	}
 
-	getRequest(url, cb) {
+	async getRequest(url, cb) {
 		// wait until prior request is finished or timed-out
 		// to reduce stacking of unanswered requests
 		if (this.PollWaiting > 0) {
@@ -352,10 +366,9 @@ class VlcInstance extends InstanceBase {
 		}
 		this.PollWaiting++
 
+		this.log('info', `Request: ${url}`)
 		got
-			.get(this.baseURL + url, {
-				headers: this.headers,
-			})
+			.get(this.baseURL + url, { headers: this.headers })
 			.then(async (response) => {
 				const data = response.body
 				// data is a Buffer
@@ -388,6 +401,7 @@ class VlcInstance extends InstanceBase {
 						this.log('info', 'Connected to ' + this.config.host + ':' + this.config.port)
 						this.lastStatus = InstanceStatus.Ok
 					}
+					this.log('info', `Response: ${data.length}`)
 
 					cb(data)
 				}
@@ -399,23 +413,29 @@ class VlcInstance extends InstanceBase {
 			})
 	}
 
-	pollPlaylist() {
+	async pollPlaylist() {
+		let plPoll = this.plPoll ?? PL_POLL
 		// don't ask until connected (we have a valid status response)
-		if (this.lastStatus == InstanceStatus.Ok) {
-			this.getRequest('/requests/playlist.json', this.updatePlaylist.bind(this))
+		if (this.PlayState != PLAYSTATE.PLAYING || plPoll++ >= PL_POLL) {
+			if (!this.decodingPlaylist && this.lastStatus == InstanceStatus.Ok) {
+				await this.getRequest('/requests/playlist.json', this.updatePlaylist.bind(this))
+				plPoll = 0
+			}
 		}
+		this.plPoll = plPoll
 	}
-	pollPlayback() {
+
+	async pollPlayback() {
 		let pollNow = this.PollNow
 		const pollTicks = this.lastStatus == InstanceStatus.Ok ? 50 : 500
 
 		// poll every tick if not stopped and hires
-		pollNow = pollNow || (this.PlayState != PLAYSTATE_STOPPED && !!this.config.hires)
+		pollNow = pollNow || (this.PlayState == PLAYSTATE.PLAYING && !!this.config.hires)
 		// or poll every 500ms if connected and not playing
 		// every 5 seconds if not connected to allow for timeouts
 		pollNow = pollNow || 0 == this.PollCount % pollTicks
 		if (pollNow) {
-			this.getRequest('/requests/status.json', this.updatePlayback.bind(this))
+			await this.getRequest('/requests/status.json', this.updatePlayback.bind(this))
 		}
 
 		this.PollNow = false
