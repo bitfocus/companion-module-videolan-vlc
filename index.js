@@ -181,7 +181,7 @@ class VlcInstance extends InstanceBase {
 			const newPlayIds = []
 
 			if (checkHash != this.PlayListCheck) {
-				this.log('info', `Decoding ${newList.length}`)
+				//this.log('info', `Decoding ${newList.length}`)
 				this.decodingPlaylist = true
 				for (const p of newList) {
 					const itemInfo = new vlc_MediaInfo(p)
@@ -203,7 +203,7 @@ class VlcInstance extends InstanceBase {
 				this.PlayList = newPlayList
 				this.PlayListCheck = checkHash
 				this.decodingPlaylist = false
-				this.log('info', `Done`)
+				//this.log('info', `Done`)
 			}
 			this.vlcItems = this.PlayIDs.length
 		}
@@ -366,7 +366,7 @@ class VlcInstance extends InstanceBase {
 		}
 		this.PollWaiting++
 
-		this.log('info', `Request: ${url}`)
+		//this.log('info', `Request: ${url}`)
 		got
 			.get(this.baseURL + url, { headers: this.headers })
 			.then(async (response) => {
@@ -401,7 +401,7 @@ class VlcInstance extends InstanceBase {
 						this.log('info', 'Connected to ' + this.config.host + ':' + this.config.port)
 						this.lastStatus = InstanceStatus.Ok
 					}
-					this.log('info', `Response: ${data.length}`)
+					//this.log('info', `Response: ${data.length}`)
 
 					cb(data)
 				}
