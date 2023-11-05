@@ -4,10 +4,12 @@ export const ConfigFields = [
 	{
 		type: 'textinput',
 		id: 'host',
-		label: 'Target IP',
+		label: 'Target HOST/IP',
+		tooltip: 'Host name only works if there is a\nworking DNS server on the local network.',
 		width: 8,
 		default: '127.0.0.1',
-		regex: Regex.IP,
+		regex:
+			'/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/gm',
 	},
 	{
 		type: 'textinput',
