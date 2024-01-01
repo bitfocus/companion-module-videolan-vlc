@@ -153,7 +153,7 @@ class VlcInstance extends InstanceBase {
 
 	clearUnusedReservedClipVariables(targetReservedCount, oldLength) {
 		const emptyStr = this.config.use_bullet ? CHARS.empty : ''
-		const knownClipCount = this.PlayIDs ? this.PlayIDs.length : 0
+		const knownClipCount =  this.PlayIDs?.length || 0
 
 		const newVariableValues = {}
 
@@ -163,7 +163,7 @@ class VlcInstance extends InstanceBase {
 		}
 
 		// remove any previously reserved variables
-		for (let i = Math.max(targetReservedCount, knownClipCount) + 1; i < (oldLength || 0); i++) {
+		for (let i = Math.max(targetReservedCount, knownClipCount) + 1; i <= (oldLength || 0); i++) {
 			newVariableValues[`pname_${i}`] = undefined
 		}
 

@@ -90,3 +90,32 @@ See HELP.md and LICENSE
 
 **V2.3.0**
 * Add actions to adjust playback speed/rate
+
+**V2.3.1**
+* Refactor for some ES6 features
+
+**V2.3.2**
+* Upgrade base modules
+
+**V2.3.3**
+* Provide proper 'empty' response to upgrade script
+
+**V2.3.4**
+* fix some comparison logic
+
+**V2.3.5**
+* fix comparisons in toggle logic
+
+**V2.3.6**
+* Add missing default values to presets
+
+**V2.3.7**
+* anoter refactor for 'pause'
+
+**V2.4.0**
+* reduce debug log info
+* Allow host name as well as IP
+
+**V2.4.1**
+* OBO error left variable set when clearing playlist
+
