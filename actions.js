@@ -235,6 +235,35 @@ export function GetActionDefinitions(self) {
 				})
 			},
 		},
+		adelay: {
+			name: 'Set Audio Delay',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Value',
+					id: 'delay',
+					useVariables: true,
+					default: 0,
+				},
+			],
+			callback: async (action, context) => {
+				let delay = await context.parseVariablesInString(action.options.delay)
+				const adj = ['+', '-'].includes(delay.slice(0, 1)) ? delay.slice(0, 1) : ''
+
+				if (adj == '') {
+					delay = delay / 1000
+				} else {
+					delay = self.vlcDelay + parseInt(delay) / 1000
+					if (Math.abs(delay - 1) < 0.001) {
+						delay = 0
+					}
+				}
+
+				await sendCommand('audiodelay', {
+					val: delay,
+				})
+			},
+		},
 		full: {
 			name: 'Full Screen',
 			options: [

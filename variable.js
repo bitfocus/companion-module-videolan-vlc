@@ -21,8 +21,12 @@ export function GetVariableDefinitions() {
 			variableId: 'r_num',
 		},
 		{
-			name: 'Playing Item Time left, variable size',
+			name: 'Playing Item Time left, Obsolete, use r_time instead',
 			variableId: 'r_left',
+		},
+		{
+			name: 'Playing Item Time left, Variable size',
+			variableId: 'r_time',
 		},
 		{
 			name: 'Playing Item Time left, HH:MM:SS',
@@ -41,7 +45,27 @@ export function GetVariableDefinitions() {
 			variableId: 'r_ss',
 		},
 		{
-			name: 'Playing Item Elapsed Time, variable size',
+			name: 'Playing Item Length, Variable size',
+			variableId: 'l_time',
+		},
+		{
+			name: 'Playing Item Length, HH:MM:SS',
+			variableId: 'l_hhmmss',
+		},
+		{
+			name: 'Playing Item Length, Hour',
+			variableId: 'l_hh',
+		},
+		{
+			name: 'Playing Item Length, Minute',
+			variableId: 'l_mm',
+		},
+		{
+			name: 'Playing Item Length, Second',
+			variableId: 'l_ss',
+		},
+		{
+			name: 'Playing Item Elapsed Time, Variable size',
 			variableId: 'e_time',
 		},
 		{
@@ -75,6 +99,10 @@ export function GetVariableDefinitions() {
 		{
 			name: 'Current playback speed %',
 			variableId: 'rate',
-		}
+		},
+		{
+			name: 'Playback Audio Sync (delay) in ms',
+			variableId: 'adelay',
+		},
 	]
 }

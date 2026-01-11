@@ -23,7 +23,7 @@ function makeHash(list) {
 
 const PLAYSTATE = CHOICES.PLAYSTATE
 
-const PL_POLL = 30		// 30 x 0.5 secs
+const PL_POLL = 30 // 30 x 0.5 secs
 
 function titleMunge(t) {
 	return t.length > 20 ? (t = t.slice(0, 10) + t.slice(-10)) : t
@@ -153,7 +153,7 @@ class VlcInstance extends InstanceBase {
 
 	clearUnusedReservedClipVariables(targetReservedCount, oldLength) {
 		const emptyStr = this.config.use_bullet ? CHARS.empty : ''
-		const knownClipCount =  this.PlayIDs?.length || 0
+		const knownClipCount = this.PlayIDs?.length || 0
 
 		const newVariableValues = {}
 
@@ -214,56 +214,42 @@ class VlcInstance extends InstanceBase {
 	}
 
 	updatePlaybackStatus() {
+		function formatTime(seconds, timeLeft) {
+			let h = Math.floor(seconds / 3600)
+			let hh = ('00' + h).slice(-2)
+			let m = Math.floor(seconds / 60) % 60
+			let mm = ('00' + m).slice(-2)
+			let s = Math.floor(seconds % 60)
+			let ss = ('00' + s).slice(-2)
+			let ft = ''
+
+			if (hh > 0) {
+				ft = hh + ':'
+			}
+			if (mm > 0) {
+				ft = ft + mm + ':'
+			}
+			ft = ft + ss
+
+			if (tenths == 0) {
+				const f = Math.floor((tLeft - Math.trunc(tLeft)) * 10)
+				const ms = ('0' + f).slice(-1)
+				if (timeLeft < 5 && timeLeft != 0) {
+					ft = ft.slice(-1) + '.' + ms
+				}
+			}
+			return { hh, mm, ss, ft }
+		}
+
 		let tenths = this.config.useTenths ? 0 : 1
 		let ps = this.PlayStatus
 		let state = this.PlayState
 
-		let tElapsed = ps.length * ps.position
-
-		let eh = Math.floor(tElapsed / 3600)
-		let ehh = ('00' + eh).slice(-2)
-		let em = Math.floor(tElapsed / 60) % 60
-		let emm = ('00' + em).slice(-2)
-		let es = Math.floor(tElapsed % 60)
-		let ess = ('00' + es).slice(-2)
-		let eft = ''
-
-		if (ehh > 0) {
-			eft = ehh + ':'
-		}
-		if (emm > 0) {
-			eft = eft + emm + ':'
-		}
-		eft = eft + ess
-
 		let tLeft = ps.length * (1 - ps.position)
-		if (tLeft > 0) {
-			tLeft += tenths
-		}
 
-		let h = Math.floor(tLeft / 3600)
-		let hh = ('00' + h).slice(-2)
-		let m = Math.floor(tLeft / 60) % 60
-		let mm = ('00' + m).slice(-2)
-		let s = Math.floor(tLeft % 60)
-		let ss = ('00' + s).slice(-2)
-		let ft = ''
-
-		if (hh > 0) {
-			ft = hh + ':'
-		}
-		if (mm > 0) {
-			ft = ft + mm + ':'
-		}
-		ft = ft + ss
-
-		if (tenths == 0) {
-			const f = Math.floor((tLeft - Math.trunc(tLeft)) * 10)
-			const ms = ('0' + f).slice(-1)
-			if (tLeft < 5 && tLeft != 0) {
-				ft = ft.slice(-1) + '.' + ms
-			}
-		}
+		let { hh, mm, ss, ft } = formatTime(ps.length * (1 - ps.position), tLeft)
+		let { hh: lhh, mm: lmm, ss: lss, ft: lft } = formatTime(ps.length, 0)
+		let { hh: ehh, mm: emm, ss: ess, ft: eft } = formatTime(ps.length * ps.position, tLeft)
 
 		this.setVariableValues({
 			v_ver: this.vlcVersion,
@@ -271,17 +257,19 @@ class VlcInstance extends InstanceBase {
 			r_id: this.NowPlaying,
 			r_name: ps.title,
 			r_num: ps.num,
-			r_stat:
-				state == PLAYSTATE.PLAYING
-					? CHARS.running
-					: state == PLAYSTATE.PAUSED
-					? CHARS.paused
-					: CHARS.stopped,
+			r_stat: state == PLAYSTATE.PLAYING ? CHARS.running : state == PLAYSTATE.PAUSED ? CHARS.paused : CHARS.stopped,
 			r_hhmmss: hh + ':' + mm + ':' + ss,
 			r_hh: hh,
 			r_mm: mm,
 			r_ss: ss,
 			r_left: ft,
+			r_time: ft,
+			l_time: lft,
+			l_hhmmss: lhh + ':' + lmm + ':' + lss,
+			l_hh: lhh,
+			l_mm: lmm,
+			l_ss: lss,
+			d_time: ps.length,
 			e_hhmmss: ehh + ':' + emm + ':' + ess,
 			e_hh: ehh,
 			e_mm: emm,
@@ -291,14 +279,13 @@ class VlcInstance extends InstanceBase {
 
 		this.checkFeedbacks()
 	}
+
 	updatePlayback(data) {
 		let stateChanged = false
 		const pbInfo = JSON.parse(data)
 
 		const pbStat = (info) => {
-			return (
-				info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
-			)
+			return info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
 		}
 
 		const wasPlaying = pbStat({ currentplid: this.NowPlaying, position: this.PlayStatus.position })
@@ -316,12 +303,18 @@ class VlcInstance extends InstanceBase {
 				rate: Math.round(this.vlcRate * 100),
 			})
 		}
+		if (this.vlcDelay != pbInfo.audiodelay) {
+			this.vlcDelay = pbInfo.audiodelay
+			this.setVariableValues({
+				adelay: this.vlcDelay * 1000,
+			})
+		}
+
 		///
 		/// pb vars and feedback here
 		///
 		stateChanged =
-			stateChanged ||
-			this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
+			stateChanged || this.PlayState != (this.PlayState = ['stopped', 'paused', 'playing'].indexOf(pbInfo.state))
 		stateChanged = stateChanged || this.PlayRepeat != (this.PlayRepeat = !!pbInfo.repeat)
 		stateChanged = stateChanged || this.PlayLoop != (this.PlayLoop = !!pbInfo.loop)
 		stateChanged = stateChanged || this.PlayShuffle != (this.PlayShuffle = !!pbInfo.random)
@@ -333,9 +326,7 @@ class VlcInstance extends InstanceBase {
 		} else if (this.PlayIDs.length > 0) {
 			if (pbInfo.currentplid) {
 				this.NowPlaying = pbInfo.currentplid
-				const t = this.PlayList[this.NowPlaying]
-					? titleMunge(this.PlayList[this.NowPlaying].name)
-					: ''
+				const t = this.PlayList[this.NowPlaying] ? titleMunge(this.PlayList[this.NowPlaying].name) : ''
 				this.PlayStatus = {
 					title: t,
 					num: 1 + this.PlayIDs.indexOf(pbInfo.currentplid.toString()),
