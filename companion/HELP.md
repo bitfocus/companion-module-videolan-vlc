@@ -81,12 +81,18 @@ If you can successfully connect to VLC with a browser, this module will work. En
 | **$(INSTANCENAME:r_id)**        | VLC ID of the Playing Item                                                                                                                    |
 | **$(INSTANCENAME:r_name)**      | Name of the Playing Item                                                                                                                      |
 | **$(INSTANCENAME:r_num)**       | Playlist Number of the Playing Item                                                                                                           |
-| **$(INSTANCENAME:r_left)**      | Time left for Playing Item, variable size                                                                                                     |
+| **$(INSTANCENAME:r_time)**      | Remaining Time for Playing Item, variable size                                                                                                |
+| **$(INSTANCENAME:r_left)**      | Remaining Time for Playing Item, variable (obsolete: use r_time) size                                                                         |
 | **$(INSTANCENAME:r_hhmmss)**    | Remaining time for Playing Item as "HH:MM:SS"                                                                                                 |
 | **$(INSTANCENAME:r_hh)**        | Hours left for Playing Item                                                                                                                   |
 | **$(INSTANCENAME:r_mm)**        | Minutes left for Playing Item                                                                                                                 |
 | **$(INSTANCENAME:r_ss)**        | Seconds left for Playing Item                                                                                                                 |
-| **$(INSTANCENAME:e_time)**      | Elapsed time for Playing Item, variable size                                                                                                  |
+| **$(INSTANCENAME:l_time)**      | Length of Playing Item, variable size                                                                                                         |
+| **$(INSTANCENAME:l_hhmmss)**    | Length Of Playing Item, "HH:MM:SS"                                                                                                            |
+| **$(INSTANCENAME:l_hh)**        | Length Of Playing Item, Hours                                                                                                                 |
+| **$(INSTANCENAME:l_mm)**        | Length Of Playing Item, Minutes                                                                                                               |
+| **$(INSTANCENAME:l_ss)**        | Length Of Playing Item, Seconds                                                                                                               |
+| **$(INSTANCENAME:l_time)**      | Elapsed time for Playing Item, variable size                                                                                                  |
 | **$(INSTANCENAME:e_hhmmss)**    | Elapsed time for Playing Item as "HH:MM:SS"                                                                                                   |
 | **$(INSTANCENAME:e_hh)**        | Elapsed time Hours for Playing Item                                                                                                           |
 | **$(INSTANCENAME:e_mm)**        | Elapsed time Minutes for Playing Item                                                                                                         |
