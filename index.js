@@ -56,6 +56,7 @@ class VlcInstance extends InstanceBase {
 	show_error(err) {
 		if (!this.disabled && this.lastStatus != InstanceStatus.UnknownError) {
 			this.updateStatus(InstanceStatus.UnknownError, err.message)
+			this.log('error', err.message)
 			this.reset_variables()
 			this.updatePlaybackStatus()
 			this.lastStatus = InstanceStatus.UnknownError
@@ -112,7 +113,7 @@ class VlcInstance extends InstanceBase {
 		this.PlayShuffle = undefined
 		this.PlayFull = undefined
 		this.PollWaiting = 0
-		this.lastStatus = -1
+		this.lastStatus = 'unknown'
 		this.disabled = false
 	}
 
@@ -391,6 +392,7 @@ class VlcInstance extends InstanceBase {
 						this.updateStatus(InstanceStatus.Ok)
 						this.log('info', 'Connected to ' + this.config.host + ':' + this.config.port)
 						this.lastStatus = InstanceStatus.Ok
+						this.log('info', `lastStatus = ${this.lastStatus}`)
 					}
 					//this.log('info', `Response: ${data.length}`)
 
