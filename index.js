@@ -336,7 +336,7 @@ class VlcInstance extends InstanceBase {
 			}
 		}
 
-		if (Object.keys(variableValues)) {
+		if (Object.keys(variableValues).length > 0) {
 			this.setVariableValues(variableValues)
 		}
 
