@@ -226,7 +226,7 @@ class VlcInstance extends InstanceBase {
 			if (hh > 0) {
 				ft = hh + ':'
 			}
-			if (mm > 0) {
+			if (hh > 0 || mm > 0) {
 				ft = ft + mm + ':'
 			}
 			ft = ft + ss
