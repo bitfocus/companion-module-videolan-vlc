@@ -284,6 +284,7 @@ class VlcInstance extends InstanceBase {
 	updatePlayback(data) {
 		let stateChanged = false
 		const pbInfo = JSON.parse(data)
+		let variableValues = {}
 
 		const pbStat = (info) => {
 			return info.currentplid + ':' + info.position + ':' + this.PlayState + ':' + this.PlayStatus.title
@@ -293,22 +294,16 @@ class VlcInstance extends InstanceBase {
 		this.vlcVersion = pbInfo.version
 		if (this.vlcVolume != pbInfo.volume) {
 			this.vlcVolume = pbInfo.volume
-			this.setVariableValues({
-				vol: this.vlcVolume,
-				volp: Math.round((this.vlcVolume * 100.0 + Number.EPSILON) / 256.0),
-			})
+			variableValues['vol'] = this.vlcVolume
+			variableValues['volp'] = Math.round((this.vlcVolume * 100.0 + Number.EPSILON) / 256.0)
 		}
 		if (this.vlcRate != pbInfo.rate) {
 			this.vlcRate = pbInfo.rate
-			this.setVariableValues({
-				rate: Math.round(this.vlcRate * 100),
-			})
+			variableValues['rate'] = Math.round(this.vlcRate * 100)
 		}
 		if (this.vlcDelay != pbInfo.audiodelay) {
 			this.vlcDelay = pbInfo.audiodelay
-			this.setVariableValues({
-				adelay: this.vlcDelay * 1000,
-			})
+			variableValues['adelay'] = this.vlcDelay * 1000
 		}
 
 		///
@@ -339,6 +334,10 @@ class VlcInstance extends InstanceBase {
 				this.NowPlaying = -1
 				this.PlayStatus = NO_CLIP
 			}
+		}
+
+		if (Object.keys(variableValues)) {
+			this.setVariableValues(variableValues)
 		}
 
 		if (stateChanged) {
