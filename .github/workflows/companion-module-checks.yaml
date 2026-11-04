@@ -2,82 +2,17 @@ name: Companion Module Checks
 
 on:
   push:
-  pull_request:
 
 jobs:
   check:
-    name: Check module / Package module
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    name: Check module
+
+    if: ${{ !contains(github.repository, 'companion-module-template-') }}
+
     permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '26.x'
-      - name: Check module metadata
-        shell: bash
-        run: |
-          test ! -f package-lock.json
-          test -f yarn.lock
-          test -f companion/HELP.md
-          jq -e '.id == "videolan-vlc" and .runtime.type == "node26" and .runtime.apiVersion == "0.0.0" and (.products | arrays | length > 0)' companion/manifest.json
-          if grep -q 'your-module-name' companion/manifest.json; then
-            exit 99
-          fi
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION=$(jq -r '.version' package.json)
-            TAG="${GITHUB_REF#refs/tags/}"
-            test "$TAG" = "$VERSION" || test "$TAG" = "v$VERSION"
-          fi
-      - name: Install Yarn Classic
-        run: npm install --global yarn@1.22.22
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-      - name: Check module tools version
-        run: |
-          node - <<'NODE'
-          const fs = require('node:fs')
-          const path = require('node:path')
-          const name = '@companion-module/tools'
-          let dir = path.dirname(require.resolve(name))
-          while (dir !== path.dirname(dir)) {
-            const file = path.join(dir, 'package.json')
-            if (fs.existsSync(file)) {
-              const pkg = JSON.parse(fs.readFileSync(file, 'utf8'))
-              if (pkg.name === name) {
-                if (!require('semver').satisfies(pkg.version, '^2.9.0')) process.exit(1)
-                console.log(`${name} ${pkg.version}`)
-                process.exit(0)
-              }
-            }
-            dir = path.dirname(dir)
-          }
-          process.exit(1)
-          NODE
-      - name: Test module
-        run: yarn test
-      - name: Build module
-        run: |
-          if jq -e '.scripts.build' package.json > /dev/null; then
-            yarn build
-          fi
-      - name: Package module
-        run: yarn companion-module-build --output=pkg
-      - name: Check module launches
-        timeout-minutes: 1
-        shell: bash
-        run: |
-          set +e
-          RESULT=$(node pkg/main.js 2>&1)
-          CODE=$?
-          if [ "$CODE" -eq 0 ] || echo "$RESULT" | grep -q 'Failed to startup module'; then
-            echo 'Module loaded successfully'
-          else
-            echo "$RESULT"
-            exit 1
-          fi
+      packages: read
+
+    uses: bitfocus/actions/.github/workflows/module-checks.yaml@main
+    # with:
+    #   upload-artifact: true # uncomment this to upload the built package as an artifact to this workflow that you can download and share with others
+
