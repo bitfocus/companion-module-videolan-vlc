@@ -12,10 +12,14 @@
 	},
 	"license": "MIT",
 	"devDependencies": {
-		"@companion-module/tools": "^2.8.0"
+		"@companion-module/tools": "^2.9.0"
 	},
 	"dependencies": {
-		"@companion-module/base": "^1.8.0",
+		"@companion-module/base": "~1.15.0",
 		"got": "^12.5.3"
+	},
+	"packageManager": "yarn@1.22.22",
+	"engines": {
+		"node": "^26.5"
 	}
 }
