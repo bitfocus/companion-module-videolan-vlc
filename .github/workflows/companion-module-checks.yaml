@@ -2,17 +2,44 @@ name: Companion Module Checks
 
 on:
   push:
+  pull_request:
 
 jobs:
   check:
-    name: Check module
-
-    if: ${{ !contains(github.repository, 'companion-module-template-') }}
-
+    name: Check module / Package module
+    runs-on: ubuntu-latest
     permissions:
-      packages: read
-
-    uses: bitfocus/actions/.github/workflows/module-checks.yaml@main
-    # with:
-    #   upload-artifact: true # uncomment this to upload the built package as an artifact to this workflow that you can download and share with others
-
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '26.x'
+      - name: Check module metadata
+        shell: bash
+        run: |
+          test ! -f package-lock.json
+          test -f yarn.lock
+          test -f companion/HELP.md
+          jq -e '.id == "videolan-vlc" and .runtime.type == "node26" and .runtime.apiVersion == "0.0.0" and (.products | arrays | length > 0)' companion/manifest.json
+          ! grep -q 'your-module-name' companion/manifest.json
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Test module
+        run: yarn test
+      - name: Package module
+        run: yarn companion-module-build --output=pkg
+      - name: Check module launches
+        shell: bash
+        run: |
+          set +e
+          RESULT=$(node pkg/main.js 2>&1)
+          CODE=$?
+          if [ "$CODE" -eq 0 ] || echo "$RESULT" | grep -q 'Failed to startup module'; then
+            echo 'Module loaded successfully'
+          else
+            echo "$RESULT"
+            exit 1
+          fi
